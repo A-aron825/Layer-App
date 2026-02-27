@@ -1,0 +1,8 @@
+{
+  "name": "Layer - Smart Closet & Stylist",
+  "description": "A smart closet app that scans your wardrobe, suggests outfits using AI, tracks usage, and helps you donate or resell unused items.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}
