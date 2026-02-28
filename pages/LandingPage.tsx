@@ -1,9 +1,16 @@
 
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { backend } from '../services/backend';
 
 const LandingPage: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = backend.getCurrentUser();
+    if (user) navigate('/dashboard');
+  }, [navigate]);
 
   useEffect(() => {
     const handleScroll = () => {

@@ -21,12 +21,22 @@ export interface ClothingItem {
 }
 
 export interface Outfit {
-  id: number;
+  id: string;
   description: string;
   reasoning: string;
   date: string;
   userId: string;
   itemIds?: string[];
+  imageUrl?: string;
+  isFavorite?: boolean;
+  folderId?: string;
+}
+
+export interface Folder {
+  id: string;
+  name: string;
+  userId: string;
+  color?: string;
 }
 
 export interface CommunityPost {
@@ -40,7 +50,7 @@ export interface CommunityPost {
 
 export interface PlannedDay {
   day: string;
-  outfitId: number | null;
+  outfitId: string | null;
   note: string;
 }
 

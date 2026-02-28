@@ -73,6 +73,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   const navItems: NavItem[] = [
     { id: 'wardrobe', label: 'Wardrobe' },
     { id: 'outfits', label: 'Outfits' },
+    { id: 'library', label: 'Library' },
     { id: 'explore', label: 'Explore' },
     { id: 'planner', label: 'Planner' },
   ];

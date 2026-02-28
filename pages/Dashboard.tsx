@@ -22,14 +22,19 @@ const Dashboard: React.FC = () => {
   const isElite = user?.plan === 'Elite';
 
   const [activeTab, setActiveTab] = useState('wardrobe');
+  const [librarySubTab, setLibrarySubTab] = useState<'all' | 'favorites' | 'folders'>('all');
   const [exploreSubTab, setExploreSubTab] = useState<'feed' | 'vibe'>('feed');
   const [weather, setWeather] = useState({ temp: 18, condition: 'Sunny', city: 'Detecting...' });
   
   const [items, setItems] = useState<ClothingItem[]>([]);
   const [savedOutfits, setSavedOutfits] = useState<Outfit[]>([]);
+  const [folders, setFolders] = useState<Folder[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [newFolderName, setNewFolderName] = useState('');
 
   // AI & Generator States
   const [outfitMode, setOutfitMode] = useState<'Standard' | 'Twin' | 'Manual' | 'Orbit'>('Standard');
@@ -88,14 +93,16 @@ const Dashboard: React.FC = () => {
       if (!user) return navigate('/login');
       setIsLoadingData(true);
       try {
-        const [i, o, cp] = await Promise.all([
+        const [i, o, cp, f] = await Promise.all([
           backend.getItems(), 
           backend.getOutfits(),
-          backend.getCommunityPosts()
+          backend.getCommunityPosts(),
+          backend.getFolders()
         ]);
         setItems(i);
         setSavedOutfits(o);
         setCommunityPosts(cp);
+        setFolders(f);
         
         if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -132,6 +139,24 @@ const Dashboard: React.FC = () => {
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, isChatOpen]);
 
   const categories = ['all', 'top', 'bottom', 'shoes', 'outerwear', 'accessory'];
+
+  const filterItems = (itemsList: ClothingItem[]) => {
+    return itemsList.filter(item => {
+      const cat = (item.category || '').toLowerCase();
+      const filter = filterCategory.toLowerCase();
+      if (filter === 'all') return true;
+      if (cat === filter) return true;
+      
+      // Normalize categories for robust matching
+      if (filter === 'top') return ['top', 'tops', 'shirt', 'shirts', 'hoodie', 'hoodies', 'tee', 't-shirt', 'blouse'].includes(cat);
+      if (filter === 'bottom') return ['bottom', 'bottoms', 'pants', 'jeans', 'skirt', 'shorts', 'trousers'].includes(cat);
+      if (filter === 'shoes') return ['shoes', 'shoe', 'footwear', 'sneakers', 'boots', 'heels'].includes(cat);
+      if (filter === 'outerwear') return ['outerwear', 'jacket', 'coat', 'blazer', 'cardigan'].includes(cat);
+      if (filter === 'accessory') return ['accessory', 'accessories', 'bag', 'hat', 'belt', 'jewelry', 'glasses'].includes(cat);
+      
+      return false;
+    });
+  };
 
   const compressImage = (base64Str: string): Promise<string> => {
     return new Promise((resolve) => {
@@ -198,6 +223,32 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const handleToggleFavoriteOutfit = async (outfitId: string) => {
+    try {
+      const updated = await backend.toggleFavoriteOutfit(outfitId);
+      setSavedOutfits(savedOutfits.map(o => o.id === outfitId ? updated : o));
+    } catch (e) {
+      setErrorMessage("Failed to update favorite status.");
+    }
+  };
+
+  const handleFavoriteFromFeed = async (post: CommunityPost) => {
+    try {
+      const res = await backend.saveOutfit({
+        description: post.title,
+        reasoning: `Inspired by @${post.author} on the Global Feed.`,
+        date: new Date().toISOString(),
+        itemIds: [],
+        imageUrl: post.imageUrl,
+        isFavorite: true
+      });
+      setSavedOutfits([res, ...savedOutfits]);
+      alert("Look added to your Favorites!");
+    } catch (e) {
+      setErrorMessage("Failed to save look.");
+    }
+  };
+
   const handleGenerateLook = async () => {
     setIsGenerating(true);
     setErrorMessage(null);
@@ -252,8 +303,14 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  const isLookSaved = generatedLook && savedOutfits.some(o => o.description === generatedLook.description && o.itemIds?.join(',') === generatedLook.itemIds?.join(','));
+
   const handleSaveOutfit = async () => {
     if (!generatedLook) return;
+    if (isLookSaved) {
+      setErrorMessage("This look is already in your collection.");
+      return;
+    }
     const res = await backend.saveOutfit({
       description: generatedLook.description,
       reasoning: generatedLook.reasoning,
@@ -261,7 +318,38 @@ const Dashboard: React.FC = () => {
       itemIds: generatedLook.itemIds
     });
     setSavedOutfits([res, ...savedOutfits]);
-    alert("Look added to your collection!");
+  };
+
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    try {
+      const folder = await backend.createFolder(newFolderName);
+      setFolders([...folders, folder]);
+      setNewFolderName('');
+      setIsCreatingFolder(false);
+    } catch (e) {
+      setErrorMessage("Failed to create folder.");
+    }
+  };
+
+  const handleMoveToFolder = async (outfitId: string, folderId: string | null) => {
+    try {
+      const updated = await backend.updateOutfitFolder(outfitId, folderId);
+      setSavedOutfits(savedOutfits.map(o => o.id === outfitId ? updated : o));
+    } catch (e) {
+      setErrorMessage("Failed to move outfit.");
+    }
+  };
+
+  const handleDeleteFolder = async (folderId: string) => {
+    try {
+      await backend.deleteFolder(folderId);
+      setFolders(folders.filter(f => f.id !== folderId));
+      setSavedOutfits(savedOutfits.map(o => o.folderId === folderId ? { ...o, folderId: undefined } : o));
+      if (selectedFolderId === folderId) setSelectedFolderId(null);
+    } catch (e) {
+      setErrorMessage("Failed to delete folder.");
+    }
   };
 
   const handleGapAnalysis = async () => {
@@ -345,7 +433,7 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handlePlannerAssign = (day: string, outfitId: number) => {
+  const handlePlannerAssign = (day: string, outfitId: string) => {
     setPlannedWeek(plannedWeek.map(p => p.day === day ? { ...p, outfitId } : p));
     setIsPlanning(null);
   };
@@ -376,6 +464,7 @@ const Dashboard: React.FC = () => {
           <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter drop-shadow-2xl animate-fade-in-up uppercase px-4">
             {activeTab === 'wardrobe' ? 'Wardrobe Vault' : 
              activeTab === 'outfits' ? 'Stylist Lab' : 
+             activeTab === 'library' ? 'Style Library' :
              activeTab === 'explore' ? 'Explore Global Feed' : 'Scheduler'}
           </h1>
           <div className="inline-flex items-center gap-2 md:gap-4 bg-white/10 border-2 border-white/20 backdrop-blur-2xl px-4 md:px-8 py-2 md:py-3 rounded-full shadow-inner animate-fade-in">
@@ -458,9 +547,9 @@ const Dashboard: React.FC = () => {
                    <span className="text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest text-xs">New Entry</span>
                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                 </label>
-                {items.map((item, index) => (
+                {filterItems(items).map((item, index) => (
                   <div key={`${item.id}-${index}`} className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden hover:shadow-2xl transition-all cursor-pointer group relative" onClick={() => setSelectedItem(item)}>
-                     <div className="aspect-[3/4] overflow-hidden">
+                     <div className="aspect-[3/4] overflow-hidden relative">
                        <img src={item.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition duration-[1.2s]" />
                      </div>
                      <div className="p-7 border-t border-gray-50 dark:border-slate-700 flex justify-between items-center">
@@ -496,7 +585,7 @@ const Dashboard: React.FC = () => {
                        <i className="fa-solid fa-box-open text-6xl mb-8 text-layer-primary"></i>
                        <h3 className="text-3xl font-black text-layer-dark dark:text-white mb-4 uppercase">Vault Empty</h3>
                        <p className="text-gray-500 dark:text-gray-400 mb-8 font-bold">Upload at least 3 items to the Style Vault to enable AI synthesis.</p>
-                       <button onClick={() => setActiveTab('closet')} className="bg-layer-btn text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl">Go to Vault</button>
+                       <button onClick={() => setActiveTab('wardrobe')} className="bg-layer-btn text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl">Go to Vault</button>
                     </div>
                   ) : ((outfitMode === 'Twin' && !isElite) || (outfitMode === 'Orbit' && !isPro)) ? (
                     <div className="animate-fade-in bg-layer-bg/30 dark:bg-slate-900/30 backdrop-blur-xl p-16 rounded-[3rem] border-4 border-dashed border-layer-primary text-center">
@@ -534,7 +623,16 @@ const Dashboard: React.FC = () => {
 
                       {outfitMode === 'Orbit' && (
                         <div className="animate-fade-in mb-14">
-                           <p className="text-gray-400 font-black text-xs uppercase tracking-widest mb-8">Hero Piece</p>
+                           <div className="flex justify-between items-center mb-8">
+                             <p className="text-gray-400 font-black text-xs uppercase tracking-widest">Hero Piece</p>
+                             {!heroItem && (
+                               <div className="flex gap-2">
+                                 {categories.map(cat => (
+                                   <button key={cat} onClick={() => setFilterCategory(cat)} className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition ${filterCategory === cat ? 'bg-layer-btn text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-400'}`}>{cat}</button>
+                                 ))}
+                               </div>
+                             )}
+                           </div>
                            {heroItem ? (
                              <div className="flex items-center gap-10 bg-gray-50 dark:bg-slate-900 p-8 rounded-[3rem] border-4 border-layer-btn">
                                <img src={heroItem.imageUrl} className="w-32 h-44 object-cover rounded-2xl" />
@@ -545,7 +643,7 @@ const Dashboard: React.FC = () => {
                              </div>
                            ) : (
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-h-[400px] overflow-y-auto no-scrollbar p-6 bg-gray-50 dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-gray-200 dark:border-slate-700">
-                                {items.map((i, index) => (
+                                {filterItems(items).map((i, index) => (
                                   <div key={`${i.id}-${index}`} onClick={() => setHeroItem(i)} className="aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition shadow-lg">
                                      <img src={i.imageUrl} className="w-full h-full object-cover" />
                                   </div>
@@ -557,12 +655,19 @@ const Dashboard: React.FC = () => {
 
                       {outfitMode === 'Manual' && (
                         <div className="animate-fade-in">
-                          <p className="text-gray-400 font-black text-xs uppercase tracking-widest mb-8">Assemble Ensemble</p>
+                          <div className="flex justify-between items-center mb-8">
+                            <p className="text-gray-400 font-black text-xs uppercase tracking-widest">Assemble Ensemble</p>
+                            <div className="flex gap-2">
+                              {categories.map(cat => (
+                                <button key={cat} onClick={() => setFilterCategory(cat)} className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest transition ${filterCategory === cat ? 'bg-layer-btn text-white' : 'bg-gray-100 dark:bg-slate-700 text-gray-400'}`}>{cat}</button>
+                              ))}
+                            </div>
+                          </div>
                           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 mb-8 max-h-[450px] overflow-y-auto no-scrollbar p-6 bg-gray-50 dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-gray-200 dark:border-slate-700">
-                            {items.map(item => {
+                            {filterItems(items).map((item, index) => {
                               const isSelected = manualSelectedItems.includes(item.id);
                               return (
-                                <div key={item.id} onClick={() => {
+                                <div key={`${item.id}-${index}`} onClick={() => {
                                     if (isSelected) setManualSelectedItems(manualSelectedItems.filter(id => id !== item.id));
                                     else setManualSelectedItems([...manualSelectedItems, item.id]);
                                   }} className={`aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer transition transform hover:scale-105 relative border-4 ${isSelected ? 'border-layer-btn' : 'border-transparent'}`}>
@@ -601,7 +706,12 @@ const Dashboard: React.FC = () => {
                              </div>
                              <div className="flex justify-between items-start mb-6">
                                <h3 className="text-4xl font-black text-layer-dark dark:text-white uppercase tracking-tighter">{generatedLook.description}</h3>
-                               <button onClick={handleSaveOutfit} className="bg-layer-btn text-white p-4 rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition"><i className="fa-solid fa-heart text-2xl"></i></button>
+                               <button 
+                                 onClick={handleSaveOutfit} 
+                                 className={`${isLookSaved ? 'bg-red-500' : 'bg-layer-btn'} text-white p-4 rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition`}
+                               >
+                                 <i className="fa-solid fa-heart text-2xl"></i>
+                               </button>
                              </div>
                              <p className="text-xl text-gray-700 dark:text-gray-300 font-bold italic">"{generatedLook.reasoning}"</p>
                           </div>
@@ -619,6 +729,156 @@ const Dashboard: React.FC = () => {
                     </>
                   )}
                </div>
+            </div>
+          )}
+
+          {activeTab === 'library' && (
+            <div className="animate-fade-in">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
+                <div>
+                  <h2 className="text-4xl md:text-6xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Style Library</h2>
+                  <p className="text-gray-400 font-bold mt-2 uppercase tracking-widest text-xs">Your curated collection of neural ensembles</p>
+                </div>
+                <div className="flex gap-2 bg-gray-100 dark:bg-slate-800 p-2 rounded-[2rem] shadow-inner">
+                  <button onClick={() => { setLibrarySubTab('all'); setSelectedFolderId(null); }} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${librarySubTab === 'all' && !selectedFolderId ? 'bg-white dark:bg-slate-700 text-layer-btn shadow-xl' : 'text-gray-400'}`}>All</button>
+                  <button onClick={() => { setLibrarySubTab('favorites'); setSelectedFolderId(null); }} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${librarySubTab === 'favorites' ? 'bg-white dark:bg-slate-700 text-red-500 shadow-xl' : 'text-gray-400'}`}>Favorites</button>
+                  <button onClick={() => setLibrarySubTab('folders')} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${librarySubTab === 'folders' || selectedFolderId ? 'bg-white dark:bg-slate-700 text-layer-primary shadow-xl' : 'text-gray-400'}`}>Folders</button>
+                </div>
+              </div>
+
+              {librarySubTab === 'folders' && !selectedFolderId && (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 animate-fade-in">
+                  <button 
+                    onClick={() => setIsCreatingFolder(true)}
+                    className="aspect-square border-4 border-dashed border-gray-200 dark:border-slate-700 rounded-[2.5rem] flex flex-col items-center justify-center hover:bg-white dark:hover:bg-slate-800 transition-all group"
+                  >
+                    <i className="fa-solid fa-folder-plus text-3xl text-gray-300 group-hover:text-layer-primary mb-4"></i>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">New Folder</span>
+                  </button>
+                  {folders.map(folder => (
+                    <div key={folder.id} className="relative group">
+                      <button 
+                        onClick={() => setSelectedFolderId(folder.id)}
+                        className="w-full aspect-square bg-white dark:bg-slate-800 rounded-[2.5rem] shadow-xl flex flex-col items-center justify-center hover:scale-105 transition-all border-b-8"
+                        style={{ borderBottomColor: folder.color }}
+                      >
+                        <i className="fa-solid fa-folder text-4xl mb-4" style={{ color: folder.color }}></i>
+                        <span className="text-xs font-black text-gray-900 dark:text-white uppercase tracking-tighter truncate px-4 w-full">{folder.name}</span>
+                        <span className="text-[9px] font-black text-gray-400 uppercase mt-1">
+                          {savedOutfits.filter(o => o.folderId === folder.id).length} Items
+                        </span>
+                      </button>
+                      <button 
+                        onClick={(e) => { e.stopPropagation(); handleDeleteFolder(folder.id); }}
+                        className="absolute -top-2 -right-2 w-8 h-8 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg flex items-center justify-center"
+                      >
+                        <i className="fa-solid fa-times text-xs"></i>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {isCreatingFolder && (
+                <div className="fixed inset-0 bg-layer-dark/60 backdrop-blur-md z-[1000] flex items-center justify-center p-4" onClick={() => setIsCreatingFolder(false)}>
+                  <div className="bg-white dark:bg-slate-800 p-12 rounded-[3rem] shadow-2xl max-w-md w-full border-8 border-gray-50 dark:border-slate-700" onClick={e => e.stopPropagation()}>
+                    <h3 className="text-3xl font-black text-gray-900 dark:text-white mb-8 uppercase tracking-tighter">New Folder</h3>
+                    <input 
+                      autoFocus
+                      type="text" 
+                      value={newFolderName} 
+                      onChange={e => setNewFolderName(e.target.value)}
+                      placeholder="Folder Name"
+                      className="w-full p-6 bg-gray-50 dark:bg-slate-900 border-4 border-gray-100 dark:border-slate-700 rounded-2xl font-black text-xl outline-none mb-8 dark:text-white"
+                    />
+                    <div className="flex gap-4">
+                      <button onClick={handleCreateFolder} className="flex-1 bg-layer-btn text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-xl">Create</button>
+                      <button onClick={() => setIsCreatingFolder(false)} className="flex-1 bg-gray-100 dark:bg-slate-700 text-gray-500 py-4 rounded-xl font-black uppercase tracking-widest">Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {(librarySubTab !== 'folders' || selectedFolderId) && (
+                <div className="animate-fade-in">
+                  {selectedFolderId && (
+                    <div className="mb-12 flex items-center gap-6">
+                      <button onClick={() => setSelectedFolderId(null)} className="w-12 h-12 bg-white dark:bg-slate-800 rounded-xl shadow-lg flex items-center justify-center text-gray-400 hover:text-layer-btn transition"><i className="fa-solid fa-arrow-left"></i></button>
+                      <h3 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">
+                        {folders.find(f => f.id === selectedFolderId)?.name}
+                      </h3>
+                    </div>
+                  )}
+
+                  {savedOutfits.filter(o => {
+                    if (librarySubTab === 'favorites') return o.isFavorite;
+                    if (selectedFolderId) return o.folderId === selectedFolderId;
+                    return true;
+                  }).length === 0 ? (
+                    <div className="bg-white dark:bg-slate-800 p-20 rounded-[4rem] text-center shadow-2xl border-4 border-dashed border-gray-100 dark:border-slate-700">
+                      <i className="fa-solid fa-heart-crack text-6xl text-gray-200 mb-8"></i>
+                      <h3 className="text-2xl font-black text-gray-400 uppercase">No Outfits Found</h3>
+                      <button onClick={() => setActiveTab('outfits')} className="mt-8 bg-layer-btn text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl">Start Designing</button>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                      {savedOutfits.filter(o => {
+                        if (librarySubTab === 'favorites') return o.isFavorite;
+                        if (selectedFolderId) return o.folderId === selectedFolderId;
+                        return true;
+                      }).map((outfit, index) => (
+                        <div key={`${outfit.id}-${index}`} className="bg-white dark:bg-slate-800 rounded-[3.5rem] shadow-2xl overflow-hidden border-4 border-white dark:border-slate-700 group relative">
+                          <div className="absolute top-8 right-8 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                            <div className="relative group/folder">
+                              <button className="w-10 h-10 bg-white text-gray-400 rounded-xl flex items-center justify-center hover:text-layer-primary transition shadow-lg"><i className="fa-solid fa-folder-open"></i></button>
+                              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl py-4 hidden group-hover/folder:block border border-gray-100 dark:border-slate-700">
+                                <p className="px-6 py-2 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 dark:border-slate-700 mb-2">Move to Folder</p>
+                                <button onClick={() => handleMoveToFolder(outfit.id, null)} className="w-full text-left px-6 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">None</button>
+                                {folders.map(f => (
+                                  <button key={f.id} onClick={() => handleMoveToFolder(outfit.id, f.id)} className="w-full text-left px-6 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: f.color }}></div>
+                                    {f.name}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <button 
+                              onClick={() => handleToggleFavoriteOutfit(outfit.id)}
+                              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-lg ${outfit.isFavorite ? 'bg-red-500 text-white' : 'bg-white text-gray-400'}`}
+                            >
+                              <i className="fa-solid fa-heart"></i>
+                            </button>
+                            <button onClick={() => { backend.deleteOutfit(outfit.id); setSavedOutfits(savedOutfits.filter(o => o.id !== outfit.id)); }} className="w-10 h-10 bg-white text-red-400 rounded-xl flex items-center justify-center hover:text-red-600 transition shadow-lg"><i className="fa-solid fa-trash-can"></i></button>
+                          </div>
+                          <div className="p-8 flex gap-4 overflow-x-auto no-scrollbar bg-gray-50 dark:bg-slate-900/50">
+                            {outfit.imageUrl ? (
+                              <img src={outfit.imageUrl} className="w-full h-64 object-cover rounded-2xl shadow-lg border-2 border-white dark:border-slate-700" />
+                            ) : (
+                              outfit.itemIds?.map((id, idx) => {
+                                const item = items.find(i => i.id === id);
+                                if (!item) return null;
+                                return (
+                                  <img key={`${id}-${idx}`} src={item.imageUrl} className="w-24 h-32 object-cover rounded-2xl shadow-lg border-2 border-white dark:border-slate-700 flex-shrink-0" />
+                                );
+                              })
+                            )}
+                          </div>
+                          <div className="p-10">
+                            <div className="flex justify-between items-start mb-4">
+                              <h4 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{outfit.description}</h4>
+                            </div>
+                            <p className="text-gray-500 dark:text-gray-400 font-bold italic text-sm">"{outfit.reasoning}"</p>
+                            <div className="mt-8 pt-6 border-t border-gray-50 dark:border-slate-700 flex justify-between items-center">
+                              <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{new Date(outfit.date).toLocaleDateString()}</span>
+                              <button onClick={() => setIsPlanning('Mon')} className="text-layer-btn font-black text-[10px] uppercase tracking-widest hover:underline">Plan This</button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -652,7 +912,13 @@ const Dashboard: React.FC = () => {
                             <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tighter">{post.title}</h4>
                             <div className="flex justify-between items-center mt-6">
                                 <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest">@{post.author}</p>
-                                <div className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 px-4 py-2 rounded-full"><i className="fa-solid fa-heart text-red-500 text-xs"></i><span className="font-black text-xs text-gray-900 dark:text-white">{post.likes}</span></div>
+                                <button 
+                                  onClick={() => handleFavoriteFromFeed(post)}
+                                  className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 px-4 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 transition group"
+                                >
+                                  <i className="fa-solid fa-heart text-gray-300 group-hover:text-red-500 text-xs transition"></i>
+                                  <span className="font-black text-xs text-gray-900 dark:text-white">{post.likes}</span>
+                                </button>
                             </div>
                           </div>
                       </div>

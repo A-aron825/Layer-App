@@ -319,11 +319,36 @@ export const analyzeWardrobeGaps = async (items: ClothingItem[]): Promise<{ miss
 
 export const autoScheduleWeek = async (items: ClothingItem[], weather: string): Promise<{ schedule?: { day: string, description: string, note: string, itemIds: string[] }[], error?: string }> => {
   const prompt = `
-    Plan a 7-day schedule (Mon-Sun).
-    Context: ${weather}.
-    USER WARDROBE:
+    Plan a 7-day style schedule (Mon-Sun).
+    
+    CONTEXT:
+    - Weather: ${weather}
+    
+    USER WARDROBE (EXACT ITEMS AVAILABLE):
     ${formatWardrobe(items)}
-    Return JSON with a "schedule" array. Each day must include "itemIds".
+    
+    TASK:
+    Generate 7 DIFFERENT and VARIED outfits, one for each day of the week. 
+    Each outfit should be unique and use a different combination of items from the wardrobe.
+    Do NOT repeat the same outfit combination for multiple days.
+    
+    CRITICAL RULES:
+    1. You MUST ONLY use IDs from the provided USER WARDROBE.
+    2. Each day MUST have a unique set of itemIds.
+    3. Return a valid JSON object.
+    
+    OUTPUT SCHEMA:
+    {
+      "schedule": [
+        {
+          "day": "Monday",
+          "description": "Look title",
+          "note": "Styling tip",
+          "itemIds": ["id1", "id2"]
+        },
+        ...
+      ]
+    }
   `;
   try {
     const response = await ai.models.generateContent({

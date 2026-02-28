@@ -6,6 +6,7 @@ const CURRENT_USER_KEY = 'layer_current_user';
 const ITEMS_KEY = 'layer_items';
 const OUTFITS_KEY = 'layer_outfits';
 const COMMUNITY_KEY = 'layer_community';
+const FOLDERS_KEY = 'layer_folders';
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -88,10 +89,72 @@ export const backend = {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
     const allOutfits = JSON.parse(localStorage.getItem(OUTFITS_KEY) || '[]');
-    const newOutfit: Outfit = { ...outfit, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, userId: user.id };
+    const newOutfit: Outfit = { 
+      ...outfit, 
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, 
+      userId: user.id,
+      isFavorite: outfit.isFavorite ?? false 
+    };
     allOutfits.push(newOutfit);
     localStorage.setItem(OUTFITS_KEY, JSON.stringify(allOutfits));
     return newOutfit;
+  },
+
+  async toggleFavoriteOutfit(outfitId: string): Promise<Outfit> {
+    const allOutfits = JSON.parse(localStorage.getItem(OUTFITS_KEY) || '[]');
+    const index = allOutfits.findIndex((o: Outfit) => o.id === outfitId);
+    if (index === -1) throw new Error("Outfit not found");
+    allOutfits[index].isFavorite = !allOutfits[index].isFavorite;
+    localStorage.setItem(OUTFITS_KEY, JSON.stringify(allOutfits));
+    return allOutfits[index];
+  },
+
+  async updateOutfitFolder(outfitId: string, folderId: string | null): Promise<Outfit> {
+    const allOutfits = JSON.parse(localStorage.getItem(OUTFITS_KEY) || '[]');
+    const index = allOutfits.findIndex((o: Outfit) => o.id === outfitId);
+    if (index === -1) throw new Error("Outfit not found");
+    allOutfits[index].folderId = folderId || undefined;
+    localStorage.setItem(OUTFITS_KEY, JSON.stringify(allOutfits));
+    return allOutfits[index];
+  },
+
+  async deleteOutfit(outfitId: string): Promise<void> {
+    const allOutfits = JSON.parse(localStorage.getItem(OUTFITS_KEY) || '[]');
+    const filtered = allOutfits.filter((o: Outfit) => o.id !== outfitId);
+    localStorage.setItem(OUTFITS_KEY, JSON.stringify(filtered));
+  },
+
+  async getFolders(): Promise<Folder[]> {
+    const user = this.getCurrentUser();
+    if (!user) return [];
+    const allFolders = JSON.parse(localStorage.getItem(FOLDERS_KEY) || '[]');
+    return allFolders.filter((f: Folder) => f.userId === user.id);
+  },
+
+  async createFolder(name: string, color?: string): Promise<Folder> {
+    const user = this.getCurrentUser();
+    if (!user) throw new Error("Not authenticated");
+    const allFolders = JSON.parse(localStorage.getItem(FOLDERS_KEY) || '[]');
+    const newFolder: Folder = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      name,
+      userId: user.id,
+      color: color || '#6bb0d8'
+    };
+    allFolders.push(newFolder);
+    localStorage.setItem(FOLDERS_KEY, JSON.stringify(allFolders));
+    return newFolder;
+  },
+
+  async deleteFolder(folderId: string): Promise<void> {
+    const allFolders = JSON.parse(localStorage.getItem(FOLDERS_KEY) || '[]');
+    const filtered = allFolders.filter((f: Folder) => f.id !== folderId);
+    localStorage.setItem(FOLDERS_KEY, JSON.stringify(filtered));
+    
+    // Also clear folderId from outfits in this folder
+    const allOutfits = JSON.parse(localStorage.getItem(OUTFITS_KEY) || '[]');
+    const updatedOutfits = allOutfits.map((o: Outfit) => o.folderId === folderId ? { ...o, folderId: undefined } : o);
+    localStorage.setItem(OUTFITS_KEY, JSON.stringify(updatedOutfits));
   },
 
   async getCommunityPosts(): Promise<CommunityPost[]> {
