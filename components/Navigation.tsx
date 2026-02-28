@@ -78,16 +78,16 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
   ];
 
   return (
-    <header className="bg-layer-primary dark:bg-slate-900 text-white px-8 py-6 flex justify-between items-center shadow-2xl relative z-[400] border-b-2 border-white/10 dark:border-white/5 transition-colors duration-300">
-      <div className="flex items-center gap-4 cursor-pointer group" onClick={() => handleNavClick('wardrobe')}>
-         <div className="w-14 h-14 bg-white dark:bg-layer-btn rounded-[1.2rem] rotate-3 flex items-center justify-center text-layer-primary dark:text-white text-3xl font-black shadow-xl group-hover:rotate-0 transition-all duration-300">
+    <header className="bg-layer-primary dark:bg-slate-900 text-white px-4 md:px-8 py-3 md:py-6 flex justify-between items-center shadow-2xl relative z-[400] border-b-2 border-white/10 dark:border-white/5 transition-colors duration-300">
+      <div className="flex items-center gap-2 md:gap-4 cursor-pointer group" onClick={() => handleNavClick('wardrobe')}>
+         <div className="w-10 h-10 md:w-14 md:h-14 bg-white dark:bg-layer-btn rounded-xl md:rounded-[1.2rem] rotate-3 flex items-center justify-center text-layer-primary dark:text-white text-xl md:text-3xl font-black shadow-xl group-hover:rotate-0 transition-all duration-300">
            <i className="fa-solid fa-layer-group"></i>
          </div>
-         <span className="text-3xl font-black tracking-tighter hidden lg:block uppercase">LAYER</span>
+         <span className="text-xl md:text-3xl font-black tracking-tighter hidden lg:block uppercase">LAYER</span>
       </div>
 
-      <div className="flex-1 flex justify-center overflow-x-auto no-scrollbar mx-4">
-        <nav className="flex items-center gap-2 bg-black/20 p-2 rounded-full backdrop-blur-2xl ring-1 ring-white/20">
+      <div className="flex-1 flex justify-center overflow-x-auto no-scrollbar mx-2 md:mx-4">
+        <nav className="flex items-center gap-1 md:gap-2 bg-black/20 p-1 md:p-2 rounded-full backdrop-blur-2xl ring-1 ring-white/20">
           {navItems.map(item => {
             // Fixed: TypeScript error on line 83 by ensuring NavItem interface includes 'pro'
             const isLocked = item.pro && !isPro;
@@ -95,7 +95,7 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
               <button 
                 key={item.id}
                 onClick={() => handleNavClick(item.id)} 
-                className={`px-8 py-3 rounded-full transition-all text-[10px] font-black uppercase tracking-[0.2em] whitespace-nowrap flex items-center gap-2 ${activeTab === item.id ? 'bg-white text-layer-primary shadow-2xl scale-105' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${isLocked ? 'opacity-50 grayscale hover:opacity-100' : ''}`}
+                className={`px-4 py-2 md:px-8 md:py-3 rounded-full transition-all text-[8px] md:text-[10px] font-black uppercase tracking-[0.1em] md:tracking-[0.2em] whitespace-nowrap flex items-center gap-1 md:gap-2 ${activeTab === item.id ? 'bg-white text-layer-primary shadow-2xl scale-105' : 'text-white/80 hover:bg-white/10 hover:text-white'} ${isLocked ? 'opacity-50 grayscale hover:opacity-100' : ''}`}
               >
                 {item.label}
                 {isLocked && <i className="fa-solid fa-lock text-[8px]"></i>}
@@ -113,9 +113,9 @@ const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
       >
         <button 
           onClick={() => setIsProfileOpen(!isProfileOpen)}
-          className={`w-14 h-14 rounded-[1.2rem] flex items-center justify-center transition-all shadow-2xl border-4 ${isProfileOpen ? 'bg-white text-layer-primary border-white' : 'bg-layer-dark dark:bg-slate-800 text-white border-transparent hover:scale-105 active:scale-90'}`}
+          className={`w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-[1.2rem] flex items-center justify-center transition-all shadow-2xl border-2 md:border-4 ${isProfileOpen ? 'bg-white text-layer-primary border-white' : 'bg-layer-dark dark:bg-slate-800 text-white border-transparent hover:scale-105 active:scale-90'}`}
         >
-           <i className="fa-solid fa-user text-2xl"></i>
+           <i className="fa-solid fa-user text-lg md:text-2xl"></i>
         </button>
         
         {isProfileOpen && (

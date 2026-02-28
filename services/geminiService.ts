@@ -5,12 +5,12 @@ import { ClothingItem, Outfit } from "../types";
 // Prevent TypeScript errors if @types/node is missing
 declare var process: {
   env: {
-    API_KEY: string;
+    GEMINI_API_KEY: string;
     [key: string]: string | undefined;
   }
 };
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 // Helper to format wardrobe for prompt
 const formatWardrobe = (items: ClothingItem[]) => 
@@ -25,27 +25,41 @@ export const generateOutfitSuggestion = async (
   availableItems: ClothingItem[]
 ): Promise<{ description: string; reasoning: string; itemIds: string[]; error?: string }> => {
   if (availableItems.length < 3) {
-    return { description: "", reasoning: "", itemIds: [], error: "Your wardrobe is too small. Upload at least 3-5 items to get quality suggestions." };
+    return { 
+      description: "", 
+      reasoning: "", 
+      itemIds: [], 
+      error: "Your Style Vault is too empty. Upload at least 3-5 items to allow the AI to synthesize a look." 
+    };
   }
 
   const prompt = `
-    You are a professional fashion stylist.
-    Current Weather: ${weather}.
-    User's Preferred Style: ${style}.
-    Occasion: ${occasion}.
+    You are a world-class fashion stylist and aesthetic consultant.
     
-    CRITICAL CONSTRAINT: You MUST ONLY suggest items from the following user wardrobe IDs.
+    CONTEXT:
+    - Weather: ${weather}
+    - Style Vibe: ${style}
+    - Occasion: ${occasion}
     
-    USER WARDROBE:
+    USER WARDROBE (EXACT ITEMS AVAILABLE):
     ${formatWardrobe(availableItems)}
     
-    Task: Suggest a complete outfit. Pick the 3-5 most appropriate items.
+    TASK:
+    Synthesize a complete, high-fashion outfit using ONLY the items listed above. 
+    Pick 3-5 items that create a cohesive and stylish ensemble appropriate for the weather and occasion.
     
-    Return a JSON object with:
-    1. "description": A short, catchy title for the look.
-    2. "reasoning": A 1-2 sentence explanation.
-    3. "itemIds": An array of the exact IDs from the wardrobe provided above.
-    4. "error": (Optional) Only if no matches possible.
+    CRITICAL RULES:
+    1. You MUST ONLY use IDs from the provided USER WARDROBE.
+    2. Do NOT suggest items that are not in the list.
+    3. Return a valid JSON object.
+    
+    OUTPUT SCHEMA:
+    {
+      "description": "A short, punchy, high-fashion title for the look",
+      "reasoning": "A 1-2 sentence professional styling justification",
+      "itemIds": ["id1", "id2", "id3"],
+      "error": "Optional error message if no cohesive look can be formed"
+    }
   `;
 
   try {
@@ -62,18 +76,36 @@ export const generateOutfitSuggestion = async (
             itemIds: { type: Type.ARRAY, items: { type: Type.STRING } },
             error: { type: Type.STRING },
           },
+          required: ["description", "reasoning", "itemIds"]
         },
       },
     });
+    
     const parsed = JSON.parse(response.text || "{}");
+    
+    // Validate itemIds against available items to prevent hallucinations
+    const validIds = (parsed.itemIds || []).filter((id: string) => 
+      availableItems.some(item => item.id === id)
+    );
+
+    if (validIds.length === 0 && !parsed.error) {
+      return { 
+        description: "", 
+        reasoning: "", 
+        itemIds: [], 
+        error: "The AI couldn't find a cohesive match in your current vault. Try adding more variety!" 
+      };
+    }
+
     return {
-      description: parsed.description || "Stylist Selection",
-      reasoning: parsed.reasoning || "A curated look for you.",
-      itemIds: parsed.itemIds || [],
+      description: parsed.description || "Neural Ensemble",
+      reasoning: parsed.reasoning || "A curated selection based on your unique style DNA.",
+      itemIds: validIds,
       error: parsed.error
     };
   } catch (error) {
-    return { description: "", reasoning: "", itemIds: [], error: "The Stylist AI is currently overwhelmed." };
+    console.error("Stylist AI Error:", error);
+    return { description: "", reasoning: "", itemIds: [], error: "The Stylist AI is currently recalibrating. Please try again in a moment." };
   }
 };
 
@@ -82,12 +114,25 @@ export const generateOutfitAroundItem = async (
   availableItems: ClothingItem[]
 ): Promise<{ description: string; reasoning: string; itemIds: string[]; error?: string }> => {
   const prompt = `
-    Create a complete outfit built around this "Hero Piece": ${heroItem.name} (ID: ${heroItem.id}).
+    Create a complete, high-fashion outfit built specifically around this "Hero Piece": ${heroItem.name} (ID: ${heroItem.id}).
     
-    USER WARDROBE:
+    USER WARDROBE (EXACT ITEMS AVAILABLE):
     ${formatWardrobe(availableItems)}
     
-    Return JSON with description, reasoning, and itemIds (including the hero ID: ${heroItem.id}).
+    TASK:
+    Suggest 2-4 complementary items from the list above that elevate the Hero Piece.
+    
+    CRITICAL RULES:
+    1. You MUST ONLY use IDs from the provided USER WARDROBE.
+    2. The Hero Piece ID (${heroItem.id}) MUST be included in the itemIds array.
+    3. Return a valid JSON object.
+    
+    OUTPUT SCHEMA:
+    {
+      "description": "A short, punchy title for the ensemble",
+      "reasoning": "A concise styling tip for this specific combination",
+      "itemIds": ["${heroItem.id}", "id2", "id3"]
+    }
   `;
 
   try {
@@ -104,17 +149,30 @@ export const generateOutfitAroundItem = async (
             itemIds: { type: Type.ARRAY, items: { type: Type.STRING } },
             error: { type: Type.STRING },
           },
+          required: ["description", "reasoning", "itemIds"]
         },
       },
     });
+    
     const parsed = JSON.parse(response.text || "{}");
+    
+    // Ensure hero item is included and validate others
+    let validIds = (parsed.itemIds || []).filter((id: string) => 
+      availableItems.some(item => item.id === id)
+    );
+    
+    if (!validIds.includes(heroItem.id)) {
+      validIds = [heroItem.id, ...validIds];
+    }
+
     return {
       description: parsed.description || "Hero Focus Look",
-      reasoning: parsed.reasoning || "Centered around your hero piece.",
-      itemIds: parsed.itemIds || [heroItem.id],
+      reasoning: parsed.reasoning || "Centered around your selected statement piece.",
+      itemIds: validIds,
       error: parsed.error
     };
   } catch (error) {
+    console.error("Orbit AI Error:", error);
     return { description: "Curated Look", reasoning: "Focused on your hero piece.", itemIds: [heroItem.id] };
   }
 };
@@ -167,12 +225,34 @@ export const chatWithStylist = async (message: string, history: any[], isMaster:
 };
 
 export const generateCelebrityLook = async (celebrity: string, items: ClothingItem[]): Promise<{ description: string; reasoning: string; itemIds: string[]; error?: string }> => {
+  if (items.length < 3) {
+    return { 
+      description: "", 
+      reasoning: "", 
+      itemIds: [], 
+      error: "Neural mimicry requires a larger data set. Upload more items to match this icon's style." 
+    };
+  }
+
   const prompt = `
-    User wants to dress like: ${celebrity}.
-    AVAILABLE WARDROBE: 
+    User wants to channel the aesthetic of: ${celebrity}.
+    
+    USER WARDROBE (EXACT ITEMS AVAILABLE):
     ${formatWardrobe(items)}
     
-    Pick 3-5 items from the list. Return JSON with description, reasoning, and itemIds.
+    TASK:
+    Select 3-5 items from the list above that best capture the essence of ${celebrity}'s signature style.
+    
+    CRITICAL RULES:
+    1. You MUST ONLY use IDs from the provided USER WARDROBE.
+    2. Return a valid JSON object.
+    
+    OUTPUT SCHEMA:
+    {
+      "description": "A title for the celebrity-inspired look",
+      "reasoning": "How this ensemble captures ${celebrity}'s vibe using the user's items",
+      "itemIds": ["id1", "id2", "id3"]
+    }
   `;
   try {
     const response = await ai.models.generateContent({
@@ -188,18 +268,26 @@ export const generateCelebrityLook = async (celebrity: string, items: ClothingIt
             itemIds: { type: Type.ARRAY, items: { type: Type.STRING } },
             error: { type: Type.STRING },
           },
+          required: ["description", "reasoning", "itemIds"]
         },
       },
     });
+    
     const parsed = JSON.parse(response.text || "{}");
+    
+    const validIds = (parsed.itemIds || []).filter((id: string) => 
+      items.some(item => item.id === id)
+    );
+
     return {
-      description: parsed.description || `${celebrity} Vibe`,
-      reasoning: parsed.reasoning || "Inspired by the icon.",
-      itemIds: parsed.itemIds || [],
+      description: parsed.description || `${celebrity} Aesthetic`,
+      reasoning: parsed.reasoning || "A look meticulously sampled from your style twin's visual DNA.",
+      itemIds: validIds,
       error: parsed.error
     };
   } catch (error) {
-    return { description: "", reasoning: "", itemIds: [], error: "Could not generate look." };
+    console.error("Celebrity AI Error:", error);
+    return { description: "", reasoning: "", itemIds: [], error: "Neural core failed to synthesize the celebrity profile." };
   }
 };
 

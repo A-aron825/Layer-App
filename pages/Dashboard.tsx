@@ -367,20 +367,20 @@ const Dashboard: React.FC = () => {
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
       
       <div className="flex-grow pb-32">
-        <div className="w-full text-white py-16 text-center shadow-2xl relative overflow-hidden"
+        <div className="w-full text-white py-8 md:py-16 text-center shadow-2xl relative overflow-hidden"
              style={{ 
                backgroundColor: '#005f9e',
                backgroundImage: `linear-gradient(to bottom right, #005f9e, #6bb0d8)`,
                backgroundSize: '100% 100%'
              }}>
-          <h1 className="text-5xl font-black mb-4 tracking-tighter drop-shadow-2xl animate-fade-in-up uppercase">
+          <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter drop-shadow-2xl animate-fade-in-up uppercase px-4">
             {activeTab === 'wardrobe' ? 'Wardrobe Vault' : 
              activeTab === 'outfits' ? 'Stylist Lab' : 
              activeTab === 'explore' ? 'Explore Global Feed' : 'Scheduler'}
           </h1>
-          <div className="inline-flex items-center gap-4 bg-white/10 border-2 border-white/20 backdrop-blur-2xl px-8 py-3 rounded-full shadow-inner animate-fade-in">
+          <div className="inline-flex items-center gap-2 md:gap-4 bg-white/10 border-2 border-white/20 backdrop-blur-2xl px-4 md:px-8 py-2 md:py-3 rounded-full shadow-inner animate-fade-in">
               <i className="fa-solid fa-cloud-bolt text-yellow-300"></i>
-              <span className="font-black text-sm uppercase tracking-widest">{weather.temp}°C, {weather.condition}</span>
+              <span className="font-black text-xs md:text-sm uppercase tracking-widest">{weather.temp}°C, {weather.condition}</span>
           </div>
         </div>
 
@@ -400,17 +400,17 @@ const Dashboard: React.FC = () => {
           
           {activeTab === 'wardrobe' && (
             <div className="animate-fade-in">
-              <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
-                <div className="flex flex-wrap gap-3 justify-center">
+              <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-12 gap-4 md:gap-8">
+                <div className="flex flex-wrap gap-2 md:gap-3 justify-center">
                   {categories.map(cat => (
-                    <button key={cat} onClick={() => setFilterCategory(cat)} className={`px-8 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition transform hover:scale-105 shadow-xl ${filterCategory === cat ? 'bg-layer-btn text-white ring-4 ring-white/30' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>{cat}</button>
+                    <button key={cat} onClick={() => setFilterCategory(cat)} className={`px-4 py-2 md:px-8 md:py-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition transform hover:scale-105 shadow-xl ${filterCategory === cat ? 'bg-layer-btn text-white ring-2 md:ring-4 ring-white/30' : 'bg-white dark:bg-slate-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-700'}`}>{cat}</button>
                   ))}
                 </div>
-                <div className="relative">
-                  <button onClick={handleGapAnalysis} disabled={isGapLoading} className={`px-8 py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${isPro ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
+                <div className="relative w-full md:w-auto">
+                  <button onClick={handleGapAnalysis} disabled={isGapLoading} className={`w-full md:w-auto px-6 py-3 md:px-8 md:py-4 rounded-xl md:rounded-2xl font-black text-[10px] md:text-xs uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 ${isPro ? 'bg-orange-500 text-white hover:bg-orange-600' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
                     {isGapLoading ? <i className="fa-solid fa-spinner fa-spin"></i> : <i className="fa-solid fa-magnifying-glass"></i>} Gap Analysis
                   </button>
-                  {!isPro && <div className="absolute -top-3 -right-3 z-10"><FeatureLock tier="Pro" label="PRO" /></div>}
+                  {!isPro && <div className="absolute -top-2 -right-2 z-10 scale-75 md:scale-100"><FeatureLock tier="Pro" label="PRO" /></div>}
                 </div>
               </div>
 
@@ -458,8 +458,8 @@ const Dashboard: React.FC = () => {
                    <span className="text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest text-xs">New Entry</span>
                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                 </label>
-                {items.map(item => (
-                  <div key={item.id} className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden hover:shadow-2xl transition-all cursor-pointer group relative" onClick={() => setSelectedItem(item)}>
+                {items.map((item, index) => (
+                  <div key={`${item.id}-${index}`} className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden hover:shadow-2xl transition-all cursor-pointer group relative" onClick={() => setSelectedItem(item)}>
                      <div className="aspect-[3/4] overflow-hidden">
                        <img src={item.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition duration-[1.2s]" />
                      </div>
@@ -475,23 +475,30 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'outfits' && (
             <div className="animate-fade-in-up max-w-6xl mx-auto">
-               <div className="bg-white dark:bg-slate-800 p-16 rounded-[4rem] shadow-2xl mb-16 border-t-[16px] border-layer-btn relative overflow-hidden ring-1 ring-gray-100 dark:ring-slate-700">
-                  <h2 className="text-6xl font-black text-layer-dark dark:text-layer-primary mb-12 tracking-tighter uppercase">Stylist Lab</h2>
+               <div className="bg-white dark:bg-slate-800 p-6 md:p-16 rounded-3xl md:rounded-[4rem] shadow-2xl mb-8 md:mb-16 border-t-[8px] md:border-t-[16px] border-layer-btn relative overflow-hidden ring-1 ring-gray-100 dark:ring-slate-700">
+                  <h2 className="text-3xl md:text-6xl font-black text-layer-dark dark:text-layer-primary mb-6 md:mb-12 tracking-tighter uppercase">Stylist Lab</h2>
                   
-                  <div className="flex gap-4 bg-gray-100 dark:bg-slate-900 p-3 rounded-[2rem] mb-12 max-w-full overflow-x-auto no-scrollbar items-center">
+                  <div className="flex gap-2 md:gap-4 bg-gray-100 dark:bg-slate-900 p-2 md:p-3 rounded-2xl md:rounded-[2rem] mb-8 md:mb-12 max-w-full overflow-x-auto no-scrollbar items-center">
                     {['Standard', 'Twin', 'Orbit', 'Manual'].map((mode) => {
                       const modeLocked = (mode === 'Twin' && !isElite) || (mode === 'Orbit' && !isPro);
                       const displayLabel = mode === 'Twin' ? 'Icon Match' : mode === 'Manual' ? 'Manual' : mode;
                       return (
-                        <button key={mode} onClick={() => setOutfitMode(mode as any)} className={`shrink-0 px-8 py-5 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.3em] transition-all flex items-center gap-3 ${outfitMode === mode ? 'bg-white dark:bg-slate-800 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>
+                        <button key={mode} onClick={() => setOutfitMode(mode as any)} className={`shrink-0 px-4 py-3 md:px-8 md:py-5 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] transition-all flex items-center gap-2 md:gap-3 ${outfitMode === mode ? 'bg-white dark:bg-slate-800 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>
                           {displayLabel}
-                          {modeLocked && <FeatureLock tier={mode === 'Twin' ? 'Elite' : 'Pro'} label={mode === 'Twin' ? 'ELITE' : 'PRO'} />}
+                          {modeLocked && <div className="scale-75 md:scale-100"><FeatureLock tier={mode === 'Twin' ? 'Elite' : 'Pro'} label={mode === 'Twin' ? 'ELITE' : 'PRO'} /></div>}
                         </button>
                       );
                     })}
                   </div>
 
-                  {((outfitMode === 'Twin' && !isElite) || (outfitMode === 'Orbit' && !isPro)) ? (
+                  {items.length === 0 ? (
+                    <div className="bg-layer-bg/30 dark:bg-slate-900/30 backdrop-blur-xl p-16 rounded-[3rem] border-4 border-dashed border-layer-primary text-center">
+                       <i className="fa-solid fa-box-open text-6xl mb-8 text-layer-primary"></i>
+                       <h3 className="text-3xl font-black text-layer-dark dark:text-white mb-4 uppercase">Vault Empty</h3>
+                       <p className="text-gray-500 dark:text-gray-400 mb-8 font-bold">Upload at least 3 items to the Style Vault to enable AI synthesis.</p>
+                       <button onClick={() => setActiveTab('closet')} className="bg-layer-btn text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl">Go to Vault</button>
+                    </div>
+                  ) : ((outfitMode === 'Twin' && !isElite) || (outfitMode === 'Orbit' && !isPro)) ? (
                     <div className="animate-fade-in bg-layer-bg/30 dark:bg-slate-900/30 backdrop-blur-xl p-16 rounded-[3rem] border-4 border-dashed border-layer-primary text-center">
                        <i className={`fa-solid ${outfitMode === 'Twin' ? 'fa-crown text-purple-500' : 'fa-bolt text-blue-500'} text-6xl mb-8`}></i>
                        <h3 className="text-3xl font-black text-layer-dark dark:text-white mb-4 uppercase">Upgrade Required</h3>
@@ -538,8 +545,8 @@ const Dashboard: React.FC = () => {
                              </div>
                            ) : (
                              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 max-h-[400px] overflow-y-auto no-scrollbar p-6 bg-gray-50 dark:bg-slate-900 rounded-[3rem] border-4 border-dashed border-gray-200 dark:border-slate-700">
-                                {items.map(i => (
-                                  <div key={i.id} onClick={() => setHeroItem(i)} className="aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition shadow-lg">
+                                {items.map((i, index) => (
+                                  <div key={`${i.id}-${index}`} onClick={() => setHeroItem(i)} className="aspect-[3/4] rounded-2xl overflow-hidden cursor-pointer hover:scale-105 transition shadow-lg">
                                      <img src={i.imageUrl} className="w-full h-full object-cover" />
                                   </div>
                                 ))}
@@ -617,28 +624,28 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'explore' && (
             <div className="animate-fade-in">
-              <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-8">
-                 <div>
-                   <h2 className="text-6xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Explore</h2>
-                   <p className="text-gray-400 font-bold mt-2 uppercase tracking-[0.4em] text-xs">Collective Style Intelligence</p>
+              <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-16 gap-4 md:gap-8">
+                 <div className="text-center md:text-left">
+                   <h2 className="text-4xl md:text-6xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Explore</h2>
+                   <p className="text-gray-400 font-bold mt-1 md:mt-2 uppercase tracking-[0.2em] md:tracking-[0.4em] text-[10px] md:text-xs">Collective Style Intelligence</p>
                  </div>
-                 <div className="flex gap-4 bg-gray-100 dark:bg-slate-800 p-2 rounded-[2rem] shadow-inner">
-                    <button onClick={() => setExploreSubTab('feed')} className={`px-8 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all ${exploreSubTab === 'feed' ? 'bg-white dark:bg-slate-700 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Global Feed</button>
-                    <button onClick={() => setExploreSubTab('vibe')} className={`px-8 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${exploreSubTab === 'vibe' ? 'bg-white dark:bg-slate-700 text-purple-500 shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Vibe Board <FeatureLock tier="Elite" label="ELITE" /></button>
+                 <div className="flex gap-2 md:gap-4 bg-gray-100 dark:bg-slate-800 p-2 rounded-2xl md:rounded-[2rem] shadow-inner">
+                    <button onClick={() => setExploreSubTab('feed')} className={`px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${exploreSubTab === 'feed' ? 'bg-white dark:bg-slate-700 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Global Feed</button>
+                    <button onClick={() => setExploreSubTab('vibe')} className={`px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${exploreSubTab === 'vibe' ? 'bg-white dark:bg-slate-700 text-purple-500 shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Vibe Board <div className="scale-75 md:scale-100"><FeatureLock tier="Elite" label="ELITE" /></div></button>
                  </div>
-                 <div className="relative">
-                    <button onClick={handleDNASync} disabled={isDNASyncing} className={`px-12 py-6 rounded-3xl font-black text-sm uppercase tracking-widest shadow-xl transition-all flex items-center gap-3 ${isPro ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-400 opacity-60'}`}>
+                 <div className="relative w-full md:w-auto">
+                    <button onClick={handleDNASync} disabled={isDNASyncing} className={`w-full md:w-auto px-8 py-4 md:px-12 md:py-6 rounded-xl md:rounded-3xl font-black text-xs md:text-sm uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 ${isPro ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-400 opacity-60'}`}>
                       {isDNASyncing ? <i className="fa-solid fa-dna fa-spin"></i> : <i className="fa-solid fa-dna"></i>} Sync DNA
                     </button>
-                    {!isPro && <div className="absolute -top-3 -right-3 z-10"><FeatureLock tier="Pro" label="PRO" /></div>}
+                    {!isPro && <div className="absolute -top-2 -right-2 z-10 scale-75 md:scale-100"><FeatureLock tier="Pro" label="PRO" /></div>}
                  </div>
               </div>
               {exploreSubTab === 'feed' ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-10 space-y-10 animate-fade-in">
-                  {communityPosts.map((post) => {
+                  {communityPosts.map((post, index) => {
                     const isDNAMatch = matchedDNAIds.includes(post.id);
                     return (
-                      <div key={post.id} className={`break-inside-avoid bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden group border-4 transition-all relative ${isDNAMatch ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-50 dark:border-slate-700 hover:shadow-2xl'}`}>
+                      <div key={`${post.id}-${index}`} className={`break-inside-avoid bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden group border-4 transition-all relative ${isDNAMatch ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-50 dark:border-slate-700 hover:shadow-2xl'}`}>
                           {isDNAMatch && <div className="absolute top-6 left-6 z-20 bg-indigo-600 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">DNA Match</div>}
                           <img src={post.imageUrl} className="w-full object-cover group-hover:scale-105 transition duration-[1.5s]" alt={post.title} />
                           <div className="p-8">
@@ -663,21 +670,21 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'planner' && (
             <div className="animate-fade-in">
-              <div className="flex justify-between items-center mb-20 flex-wrap gap-6">
-                <h2 className="text-7xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Scheduler</h2>
-                <div className="relative">
-                  <button onClick={handleAutoSchedule} disabled={isAutoScheduling} className={`px-12 py-6 rounded-3xl font-black text-xl uppercase tracking-widest shadow-2xl transition-all flex items-center gap-3 ${isPro ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
+              <div className="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-20 gap-6">
+                <h2 className="text-4xl md:text-7xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Scheduler</h2>
+                <div className="relative w-full md:w-auto">
+                  <button onClick={handleAutoSchedule} disabled={isAutoScheduling} className={`w-full md:w-auto px-8 py-4 md:px-12 md:py-6 rounded-xl md:rounded-3xl font-black text-lg md:text-xl uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${isPro ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
                     {isAutoScheduling ? <i className="fa-solid fa-wand-sparkles fa-spin"></i> : <i className="fa-solid fa-wand-sparkles"></i>} Auto-Schedule
                   </button>
-                  {!isPro && <div className="absolute -top-4 -right-4 z-10"><FeatureLock tier="Pro" label="PRO" /></div>}
+                  {!isPro && <div className="absolute -top-2 -right-2 z-10 scale-75 md:scale-100"><FeatureLock tier="Pro" label="PRO" /></div>}
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-7 gap-10">
+              <div className="grid grid-cols-1 md:grid-cols-7 gap-6 md:gap-10">
                  {plannedWeek.map(p => {
                    const assignedOutfit = savedOutfits.find(o => o.id === p.outfitId);
                    return (
-                     <div key={p.day} className={`min-h-[500px] bg-white dark:bg-slate-800 rounded-[4rem] p-10 flex flex-col items-center shadow-2xl transition-all transform hover:-translate-y-4 cursor-pointer relative overflow-hidden ${assignedOutfit ? 'ring-[6px] ring-layer-btn' : 'border-4 border-gray-100 dark:border-slate-700'}`} onClick={() => setIsPlanning(p.day)}>
-                       <span className="text-4xl font-black mb-12 text-gray-200 dark:text-slate-700 uppercase tracking-tighter">{p.day}</span>
+                     <div key={p.day} className={`min-h-[300px] md:min-h-[500px] bg-white dark:bg-slate-800 rounded-3xl md:rounded-[4rem] p-6 md:p-10 flex flex-col items-center shadow-2xl transition-all transform hover:-translate-y-2 md:hover:-translate-y-4 cursor-pointer relative overflow-hidden ${assignedOutfit ? 'ring-[4px] md:ring-[6px] ring-layer-btn' : 'border-2 md:border-4 border-gray-100 dark:border-slate-700'}`} onClick={() => setIsPlanning(p.day)}>
+                       <span className="text-2xl md:text-4xl font-black mb-6 md:mb-12 text-gray-200 dark:text-slate-700 uppercase tracking-tighter">{p.day}</span>
                        {assignedOutfit ? (
                          <div className="w-full h-full flex flex-col items-center flex-1 justify-center animate-fade-in">
                             <div className="w-full aspect-[3/4] bg-gray-100 dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-700 mb-8 transform group-hover:scale-105 transition">
@@ -755,8 +762,8 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-12">
-                  {savedOutfits.map(o => (
-                    <div key={o.id} onClick={() => handlePlannerAssign(isPlanning, o.id)} className="bg-gray-50 dark:bg-slate-900 p-8 rounded-[3.5rem] border-8 border-transparent hover:border-layer-btn transition-all cursor-pointer group flex flex-col items-center">
+                  {savedOutfits.map((o, index) => (
+                    <div key={`${o.id}-${index}`} onClick={() => handlePlannerAssign(isPlanning, o.id)} className="bg-gray-50 dark:bg-slate-900 p-8 rounded-[3.5rem] border-8 border-transparent hover:border-layer-btn transition-all cursor-pointer group flex flex-col items-center">
                        {o.itemIds && o.itemIds.length > 0 ? (
                          <img src={items.find(i => i.id === o.itemIds?.[0])?.imageUrl} className="w-full aspect-[3/4] object-cover rounded-[2.5rem] shadow-2xl mb-8 group-hover:scale-110 transition duration-500" />
                        ) : (

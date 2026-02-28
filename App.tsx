@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import ProfilePage from './pages/ProfilePage';
 import SettingsPage from './pages/SettingsPage';
 import UpgradePage from './pages/UpgradePage';
+import PrivacyPage from './pages/PrivacyPage';
+import ProtocolPage from './pages/ProtocolPage';
 
 const App: React.FC = () => {
   useEffect(() => {
@@ -30,6 +32,8 @@ const App: React.FC = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/upgrade" element={<UpgradePage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/protocol" element={<ProtocolPage />} />
       </Routes>
     </HashRouter>
   );

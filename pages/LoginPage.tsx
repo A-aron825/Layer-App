@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { backend } from '../services/backend';
 
@@ -10,6 +10,30 @@ const LoginPage: React.FC = () => {
   const [resetSent, setResetSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const origin = event.origin;
+      if (!origin.endsWith('.run.app') && !origin.includes('localhost')) {
+        return;
+      }
+      if (event.data?.type === 'OAUTH_AUTH_SUCCESS') {
+        const userData = event.data.user;
+        backend.signup({
+          email: userData.email,
+          username: userData.name,
+          password: 'oauth_password_' + Math.random(),
+          styles: []
+        }).then(() => navigate('/dashboard'))
+          .catch(() => {
+            backend.login(userData.email, '').then(() => navigate('/dashboard'))
+              .catch(() => navigate('/dashboard'));
+          });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, [navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,21 +55,33 @@ const LoginPage: React.FC = () => {
     setResetSent(true);
   }
 
-  const handleSocialLogin = (provider: string) => {
-    // Simulate social login delay
-    const btn = document.getElementById(`btn-${provider}`);
-    if(btn) btn.classList.add('opacity-50', 'cursor-not-allowed');
-    
-    setTimeout(() => {
-      // Create a dummy user for social login simulation
-      backend.signup({
-        email: `guest_${Date.now()}@example.com`,
-        username: 'Guest User',
-        password: 'password',
-        styles: []
-      }).then(() => navigate('/dashboard'))
-        .catch(() => backend.login(`guest_${Date.now()}@example.com`, 'password').then(() => navigate('/dashboard')));
-    }, 800);
+  const handleSocialLogin = async (provider: string) => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await fetch(`/api/auth/${provider}/url`);
+      if (!response.ok) throw new Error(`Failed to get ${provider} auth URL`);
+      const { url } = await response.json();
+
+      const width = 600;
+      const height = 700;
+      const left = window.screenX + (window.outerWidth - width) / 2;
+      const top = window.screenY + (window.outerHeight - height) / 2;
+
+      const authWindow = window.open(
+        url,
+        'oauth_popup',
+        `width=${width},height=${height},left=${left},top=${top}`
+      );
+
+      if (!authWindow) {
+        setError('Popup was blocked. Please allow popups for this site.');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Social login failed');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -66,11 +102,11 @@ const LoginPage: React.FC = () => {
           backgroundSize: '40px 40px'
       }}></div>
 
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 p-10 rounded-2xl shadow-2xl w-full max-w-md relative z-10 transition-all duration-300">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 p-6 md:p-10 rounded-2xl shadow-2xl w-full max-w-md relative z-10 transition-all duration-300 mx-4">
         
         {view === 'login' ? (
           <>
-            <h1 className="text-4xl font-bold text-center text-white mb-8">Welcome Back</h1>
+            <h1 className="text-2xl md:text-4xl font-bold text-center text-white mb-6 md:mb-8">Welcome Back</h1>
             
             {error && (
               <div className="bg-red-500/20 border border-red-500 text-white p-3 rounded mb-4 text-center">
@@ -131,15 +167,6 @@ const LoginPage: React.FC = () => {
               >
                 <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5" />
                 Continue with Google
-              </button>
-              <button 
-                id="btn-facebook"
-                type="button" 
-                onClick={() => handleSocialLogin('facebook')}
-                className="w-full bg-[#1877F2] text-white font-semibold py-2 px-4 rounded-lg flex items-center justify-center gap-3 hover:bg-[#155db2] transition transform active:scale-95 shadow"
-              >
-                <i className="fa-brands fa-facebook-f"></i>
-                Continue with Facebook
               </button>
             </div>
             

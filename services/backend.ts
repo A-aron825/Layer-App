@@ -16,7 +16,7 @@ export const backend = {
     if (users.find((u: User) => u.email === user.email)) {
       throw new Error('User already exists');
     }
-    const newUser: User = { ...user, id: Date.now().toString(), plan: 'Starter' };
+    const newUser: User = { ...user, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, plan: 'Starter' };
     users.push(newUser);
     localStorage.setItem(USERS_KEY, JSON.stringify(users));
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
@@ -63,7 +63,7 @@ export const backend = {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
     const allItems = JSON.parse(localStorage.getItem(ITEMS_KEY) || '[]');
-    const newItem: ClothingItem = { ...item, id: Date.now().toString(), userId: user.id };
+    const newItem: ClothingItem = { ...item, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, userId: user.id };
     allItems.push(newItem);
     localStorage.setItem(ITEMS_KEY, JSON.stringify(allItems));
     return newItem;
@@ -88,7 +88,7 @@ export const backend = {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
     const allOutfits = JSON.parse(localStorage.getItem(OUTFITS_KEY) || '[]');
-    const newOutfit: Outfit = { ...outfit, id: Date.now(), userId: user.id };
+    const newOutfit: Outfit = { ...outfit, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, userId: user.id };
     allOutfits.push(newOutfit);
     localStorage.setItem(OUTFITS_KEY, JSON.stringify(allOutfits));
     return newOutfit;
@@ -111,7 +111,7 @@ export const backend = {
 
   async addCommunityPost(post: Omit<CommunityPost, 'id' | 'likes' | 'timestamp'>): Promise<CommunityPost> {
     const posts = JSON.parse(localStorage.getItem(COMMUNITY_KEY) || '[]');
-    const newPost: CommunityPost = { ...post, id: Date.now().toString(), likes: 0, timestamp: new Date().toISOString() };
+    const newPost: CommunityPost = { ...post, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, likes: 0, timestamp: new Date().toISOString() };
     posts.unshift(newPost);
     localStorage.setItem(COMMUNITY_KEY, JSON.stringify(posts));
     return newPost;
