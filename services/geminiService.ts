@@ -10,7 +10,19 @@ declare var process: {
   }
 };
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+let aiInstance: GoogleGenAI | null = null;
+
+const getAI = () => {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      console.warn("GEMINI_API_KEY is missing. AI features will be disabled.");
+      // We return a mock or handle it in the calls
+    }
+    aiInstance = new GoogleGenAI({ apiKey: apiKey || 'MISSING_KEY' });
+  }
+  return aiInstance;
+};
 
 // Helper to format wardrobe for prompt
 const formatWardrobe = (items: ClothingItem[]) => 
@@ -24,6 +36,7 @@ export const generateOutfitSuggestion = async (
   occasion: string, 
   availableItems: ClothingItem[]
 ): Promise<{ description: string; reasoning: string; itemIds: string[]; error?: string }> => {
+  const ai = getAI();
   if (availableItems.length < 3) {
     return { 
       description: "", 
@@ -113,6 +126,7 @@ export const generateOutfitAroundItem = async (
   heroItem: ClothingItem,
   availableItems: ClothingItem[]
 ): Promise<{ description: string; reasoning: string; itemIds: string[]; error?: string }> => {
+  const ai = getAI();
   const prompt = `
     Create a complete, high-fashion outfit built specifically around this "Hero Piece": ${heroItem.name} (ID: ${heroItem.id}).
     
@@ -177,36 +191,43 @@ export const generateOutfitAroundItem = async (
   }
 };
 
-export const analyzeClosetItem = async (base64Image: string): Promise<any> => {
+export const analyzeClosetItem = async (base64Image: string): Promise<any[]> => {
+   const ai = getAI();
    try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: {
         parts: [
           { inlineData: { mimeType: "image/jpeg", data: base64Image } },
-          { text: "Analyze this clothing item. Return JSON with name, category (shirt/hoodie/bottom/shoes/outerwear/accessory), resaleEstimate (number), and sustainabilityScore (1-10)." }
+          { text: "Analyze this image and identify ALL clothing items present. For each item, return a JSON object with: name, category (shirt/hoodie/bottom/shoes/outerwear/accessory/top), resaleEstimate (number), and sustainabilityScore (1-10). Return an array of these objects." }
         ]
       },
       config: {
         responseMimeType: "application/json",
         responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            name: { type: Type.STRING },
-            category: { type: Type.STRING },
-            resaleEstimate: { type: Type.NUMBER },
-            sustainabilityScore: { type: Type.NUMBER },
-          },
+          type: Type.ARRAY,
+          items: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING },
+              category: { type: Type.STRING },
+              resaleEstimate: { type: Type.NUMBER },
+              sustainabilityScore: { type: Type.NUMBER },
+            },
+            required: ["name", "category"]
+          }
         }
       }
     });
-    return JSON.parse(response.text || "{}");
+    const parsed = JSON.parse(response.text || "[]");
+    return Array.isArray(parsed) ? parsed : [parsed];
    } catch (error) {
-     return { name: "Unknown Item", category: "shirt", resaleEstimate: 5, sustainabilityScore: 5 };
+     return [{ name: "Unknown Item", category: "shirt", resaleEstimate: 5, sustainabilityScore: 5 }];
    }
 }
 
 export const chatWithStylist = async (message: string, history: any[], isMaster: boolean = false): Promise<string> => {
+  const ai = getAI();
   const instruction = isMaster 
     ? "You are the Master Stylist, a hyper-advanced 1:1 style persona. You analyze fashion through the lens of fit, silhouette, and confidence."
     : "You are a professional fashion assistant.";
@@ -225,6 +246,7 @@ export const chatWithStylist = async (message: string, history: any[], isMaster:
 };
 
 export const generateCelebrityLook = async (celebrity: string, items: ClothingItem[]): Promise<{ description: string; reasoning: string; itemIds: string[]; error?: string }> => {
+  const ai = getAI();
   if (items.length < 3) {
     return { 
       description: "", 
@@ -292,6 +314,7 @@ export const generateCelebrityLook = async (celebrity: string, items: ClothingIt
 };
 
 export const analyzeWardrobeGaps = async (items: ClothingItem[]): Promise<{ missingItems: string[]; reasoning: string }> => {
+  const ai = getAI();
   const prompt = `
     Analyze this wardrobe: ${items.map(i => i.name).join(', ')}.
     Identify top 3-4 missing essentials. Return JSON.
@@ -318,6 +341,7 @@ export const analyzeWardrobeGaps = async (items: ClothingItem[]): Promise<{ miss
 };
 
 export const autoScheduleWeek = async (items: ClothingItem[], weather: string): Promise<{ schedule?: { day: string, description: string, note: string, itemIds: string[] }[], error?: string }> => {
+  const ai = getAI();
   const prompt = `
     Plan a 7-day style schedule (Mon-Sun).
     
@@ -383,6 +407,7 @@ export const autoScheduleWeek = async (items: ClothingItem[], weather: string): 
 };
 
 export const generateVibeBoard = async (items: ClothingItem[]): Promise<{ title: string; mood: string; hexColors: string[]; keywords: string[] }> => {
+  const ai = getAI();
   const prompt = `
     Based on this wardrobe: ${items.map(i => i.name).join(', ')}.
     Generate a "Vibe of the Day" aesthetic profile.
@@ -412,6 +437,7 @@ export const generateVibeBoard = async (items: ClothingItem[]): Promise<{ title:
 };
 
 export const matchStyleDNA = async (items: ClothingItem[], communityFeed: any[]): Promise<string[]> => {
+  const ai = getAI();
   const prompt = `
     Analyze the user's wardrobe and the community style feed to find the best matches.
     

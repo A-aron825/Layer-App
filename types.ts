@@ -43,6 +43,7 @@ export interface CommunityPost {
   id: string;
   title: string;
   imageUrl: string;
+  imageUrls?: string[];
   author: string;
   likes: number;
   timestamp: string;

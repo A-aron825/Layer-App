@@ -15,11 +15,77 @@ import { backend } from '../services/backend';
 import { ClothingItem, Outfit, PlannedDay, CommunityPost } from '../types';
 import { useNavigate } from 'react-router-dom';
 
-const MiniOutfitCard = ({ o, items, setPostImage, setPostTitle }: any) => {
+const CommunityPostCard = ({ post, matchedDNAIds, handleFavoriteFromFeed }: any) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const images = post.imageUrls && post.imageUrls.length > 0 ? post.imageUrls : [post.imageUrl];
+  const isDNAMatch = matchedDNAIds.includes(post.id);
+
+  useEffect(() => {
+    if (images.length <= 1 || isHovered) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        const maxScroll = scrollWidth - clientWidth;
+        
+        if (scrollLeft >= maxScroll - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          scrollRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
+        }
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [images, isHovered]);
+
+  return (
+    <div 
+      className={`break-inside-avoid bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden group border-4 transition-all relative ${isDNAMatch ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-50 dark:border-slate-700 hover:shadow-2xl'}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {isDNAMatch && <div className="absolute top-6 left-6 z-20 bg-indigo-600 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">DNA Match</div>}
+      
+      <div ref={scrollRef} className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth">
+        {images.map((img: string, i: number) => (
+          <div key={i} className="w-full flex-shrink-0 snap-center">
+            <img src={img} className="w-full object-cover group-hover:scale-105 transition duration-[1.5s]" alt={post.title} />
+          </div>
+        ))}
+      </div>
+
+      {images.length > 1 && (
+        <div className="absolute bottom-[140px] left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+          {images.map((_: any, i: number) => (
+            <div key={i} className="w-1 h-1 rounded-full bg-white/50"></div>
+          ))}
+        </div>
+      )}
+
+      <div className="p-8">
+        <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tighter">{post.title}</h4>
+        <div className="flex justify-between items-center mt-6">
+          <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest">@{post.author}</p>
+          <button 
+            onClick={() => handleFavoriteFromFeed(post)}
+            className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 px-4 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 transition group"
+          >
+            <i className="fa-solid fa-heart text-gray-300 group-hover:text-red-500 text-xs transition"></i>
+            <span className="font-black text-xs text-gray-900 dark:text-white">{post.likes}</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const MiniOutfitCard = ({ o, items, setPostImages, setPostTitle }: any) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [isHovered, setIsHovered] = useState(false);
   const outfitItems = o.itemIds?.map((id: string) => items.find((i: any) => i.id === id)).filter(Boolean) || [];
-  const displayImage = o.imageUrl || (outfitItems.length > 0 ? outfitItems[0]?.imageUrl : null) || `https://picsum.photos/400/600?random=${o.id}`;
+  const displayImages = o.imageUrl ? [o.imageUrl] : (outfitItems.length > 0 ? outfitItems.map((i: any) => i.imageUrl) : [`https://picsum.photos/400/600?random=${o.id}`]);
 
   useEffect(() => {
     if (o.imageUrl || outfitItems.length <= 1 || isHovered) return;
@@ -35,7 +101,7 @@ const MiniOutfitCard = ({ o, items, setPostImage, setPostTitle }: any) => {
           scrollRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
         }
       }
-    }, 4000); // Slightly slower for the modal
+    }, 4000);
 
     return () => clearInterval(interval);
   }, [outfitItems, o.imageUrl, isHovered]);
@@ -53,7 +119,7 @@ const MiniOutfitCard = ({ o, items, setPostImage, setPostTitle }: any) => {
         </div>
         <button 
           onClick={() => {
-            setPostImage(displayImage);
+            setPostImages(displayImages);
             setPostTitle(o.description);
           }}
           className="bg-layer-btn text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition shadow-lg"
@@ -65,7 +131,7 @@ const MiniOutfitCard = ({ o, items, setPostImage, setPostTitle }: any) => {
         {o.imageUrl ? (
           <button 
             onClick={() => {
-              setPostImage(o.imageUrl!);
+              setPostImages([o.imageUrl!]);
               setPostTitle(o.description);
             }}
             className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
@@ -77,7 +143,7 @@ const MiniOutfitCard = ({ o, items, setPostImage, setPostTitle }: any) => {
             <button 
               key={`${o.id}-${item?.id}-${idx}`}
               onClick={() => {
-                setPostImage(item?.imageUrl || displayImage);
+                setPostImages([item?.imageUrl]);
                 setPostTitle(o.description);
               }}
               className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
@@ -286,12 +352,13 @@ const Dashboard: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  const [inspectingOutfit, setInspectingOutfit] = useState<Outfit | null>(null);
   const [openFolderMenuId, setOpenFolderMenuId] = useState<string | null>(null);
   
   // Posting State
   const [isPostingModalOpen, setIsPostingModalOpen] = useState(false);
   const [postTitle, setPostTitle] = useState('');
-  const [postImage, setPostImage] = useState<string | null>(null);
+  const [postImages, setPostImages] = useState<string[]>([]);
   const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
   useEffect(() => {
@@ -397,25 +464,64 @@ const Dashboard: React.FC = () => {
   };
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-      let dataUrl = event.target?.result as string;
-      dataUrl = await compressImage(dataUrl);
-      setNewItemImage(dataUrl);
-      setIsAnalyzing(true);
-      setErrorMessage(null);
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    setErrorMessage(null);
+    let totalAdded = 0;
+    let totalSkipped = 0;
+    
+    // Use a local copy to track items during the batch to avoid duplicates within the same upload
+    let currentItems = [...items];
+    
+    setIsAnalyzing(true);
+    for (const file of files) {
+      const reader = new FileReader();
+      const dataUrl = await new Promise<string>((resolve) => {
+        reader.onload = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      const compressed = await compressImage(dataUrl);
+      
+      setNewItemImage(compressed);
       try {
-        const res = await analyzeClosetItem(dataUrl.split(',')[1]);
-        setAnalysisResult(res);
+        const results = await analyzeClosetItem(compressed.split(',')[1]);
+        
+        for (const res of results) {
+          const isDuplicate = currentItems.some(item => 
+            item.name.toLowerCase() === res.name.toLowerCase() && 
+            item.category.toLowerCase() === (res.category || '').toLowerCase()
+          );
+
+          if (!isDuplicate) {
+            const saved = await backend.addItem({
+              name: res.name,
+              category: (res.category || 'shirt').toLowerCase() as any,
+              imageUrl: compressed,
+              type: res.category,
+              wearCount: 0
+            });
+            currentItems.push(saved);
+            totalAdded++;
+          } else {
+            totalSkipped++;
+          }
+        }
       } catch (e) {
-        setErrorMessage("Failed to analyze image.");
-      } finally {
-        setIsAnalyzing(false);
+        setErrorMessage(`Failed to analyze ${file.name}`);
       }
-    };
-    reader.readAsDataURL(file);
+    }
+    
+    setItems(currentItems);
+    setIsAnalyzing(false);
+    setNewItemImage(null);
+    setAnalysisResult(null);
+    
+    if (totalAdded > 0) {
+      setSuccessMessage(`Neural core identified ${totalAdded} new items. ${totalSkipped > 0 ? `(${totalSkipped} duplicates filtered)` : ''}`);
+    } else if (totalSkipped > 0) {
+      setSuccessMessage("All identified items were already in your vault.");
+    }
   };
 
   const handleSaveNewItem = async () => {
@@ -668,18 +774,19 @@ const Dashboard: React.FC = () => {
   };
 
   const handleCreatePost = async () => {
-    if (!postTitle.trim() || !postImage) return;
+    if (!postTitle.trim() || postImages.length === 0) return;
     setIsSubmittingPost(true);
     try {
       const newPost = await backend.addCommunityPost({
         title: postTitle,
         author: user?.email.split('@')[0] || 'Anonymous',
-        imageUrl: postImage
+        imageUrl: postImages[0],
+        imageUrls: postImages
       });
       setCommunityPosts([newPost, ...communityPosts]);
       setIsPostingModalOpen(false);
       setPostTitle('');
-      setPostImage(null);
+      setPostImages([]);
       setSuccessMessage("Look shared with the collective!");
     } catch (e) {
       setErrorMessage("Failed to share post.");
@@ -688,13 +795,21 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const handlePostImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
+  const handlePostImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+    
+    const newImages: string[] = [];
+    for (const file of files) {
       const reader = new FileReader();
-      reader.onloadend = () => setPostImage(reader.result as string);
-      reader.readAsDataURL(file);
+      const dataUrl = await new Promise<string>((resolve) => {
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+      const compressed = await compressImage(dataUrl);
+      newImages.push(compressed);
     }
+    setPostImages([...postImages, ...newImages]);
   };
 
   const handlePlannerAssign = (day: string, outfitId: string) => {
@@ -791,21 +906,10 @@ const Dashboard: React.FC = () => {
                 <div className="mb-12 bg-white dark:bg-slate-800 p-10 rounded-[3rem] shadow-2xl border-4 border-layer-primary animate-fade-in-up flex flex-col md:flex-row gap-10 items-center">
                    <img src={newItemImage} className="w-48 h-64 object-cover rounded-3xl shadow-xl" />
                    <div className="flex-1">
-                      {isAnalyzing ? (
-                        <div className="flex items-center gap-4 text-layer-primary">
-                          <i className="fa-solid fa-spinner fa-spin text-4xl"></i>
-                          <span className="text-xl font-black uppercase tracking-widest">Analysis...</span>
-                        </div>
-                      ) : analysisResult ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                           <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Item Identity</p><p className="text-2xl font-black text-gray-900 dark:text-white uppercase">{analysisResult.name}</p></div>
-                           <div><p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Category Mapping</p><p className="text-xl font-bold text-layer-btn uppercase">{analysisResult.category}</p></div>
-                           <div className="md:col-span-2 flex gap-4 mt-4">
-                             <button onClick={handleSaveNewItem} className="bg-layer-btn text-white px-10 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl">Save</button>
-                             <button onClick={() => setNewItemImage(null)} className="bg-gray-100 dark:bg-slate-700 text-gray-500 dark:text-gray-400 px-8 py-4 rounded-2xl font-black uppercase tracking-widest">Discard</button>
-                           </div>
-                        </div>
-                      ) : null}
+                      <div className="flex items-center gap-4 text-layer-primary">
+                        <i className="fa-solid fa-spinner fa-spin text-4xl"></i>
+                        <span className="text-xl font-black uppercase tracking-widest">Neural Analysis in Progress...</span>
+                      </div>
                    </div>
                 </div>
               )}
@@ -1145,28 +1249,14 @@ const Dashboard: React.FC = () => {
               </div>
               {exploreSubTab === 'feed' ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-10 space-y-10 animate-fade-in">
-                  {communityPosts.map((post, index) => {
-                    const isDNAMatch = matchedDNAIds.includes(post.id);
-                    return (
-                      <div key={`${post.id}-${index}`} className={`break-inside-avoid bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden group border-4 transition-all relative ${isDNAMatch ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-50 dark:border-slate-700 hover:shadow-2xl'}`}>
-                          {isDNAMatch && <div className="absolute top-6 left-6 z-20 bg-indigo-600 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">DNA Match</div>}
-                          <img src={post.imageUrl} className="w-full object-cover group-hover:scale-105 transition duration-[1.5s]" alt={post.title} />
-                          <div className="p-8">
-                            <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tighter">{post.title}</h4>
-                            <div className="flex justify-between items-center mt-6">
-                                <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest">@{post.author}</p>
-                                <button 
-                                  onClick={() => handleFavoriteFromFeed(post)}
-                                  className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 px-4 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 transition group"
-                                >
-                                  <i className="fa-solid fa-heart text-gray-300 group-hover:text-red-500 text-xs transition"></i>
-                                  <span className="font-black text-xs text-gray-900 dark:text-white">{post.likes}</span>
-                                </button>
-                            </div>
-                          </div>
-                      </div>
-                    );
-                  })}
+                  {communityPosts.map((post, index) => (
+                    <CommunityPostCard 
+                      key={`${post.id}-${index}`}
+                      post={post}
+                      matchedDNAIds={matchedDNAIds}
+                      handleFavoriteFromFeed={handleFavoriteFromFeed}
+                    />
+                  ))}
                 </div>
               ) : (
                 <div className="animate-fade-in">
@@ -1229,7 +1319,13 @@ const Dashboard: React.FC = () => {
                  {plannedWeek.map(p => {
                    const assignedOutfit = savedOutfits.find(o => o.id === p.outfitId);
                    return (
-                     <div key={p.day} className={`min-h-[300px] md:min-h-[500px] bg-white dark:bg-slate-800 rounded-3xl md:rounded-[4rem] p-6 md:p-10 flex flex-col items-center shadow-2xl transition-all transform hover:-translate-y-2 md:hover:-translate-y-4 cursor-pointer relative overflow-hidden ${assignedOutfit ? 'ring-[4px] md:ring-[6px] ring-layer-btn' : 'border-2 md:border-4 border-gray-100 dark:border-slate-700'}`} onClick={() => setIsPlanning(p.day)}>
+                     <div key={p.day} className={`min-h-[300px] md:min-h-[500px] bg-white dark:bg-slate-800 rounded-3xl md:rounded-[4rem] p-6 md:p-10 flex flex-col items-center shadow-2xl transition-all transform hover:-translate-y-2 md:hover:-translate-y-4 cursor-pointer relative overflow-hidden ${assignedOutfit ? 'ring-[4px] md:ring-[6px] ring-layer-btn' : 'border-2 md:border-4 border-gray-100 dark:border-slate-700'}`} onClick={() => {
+                       if (assignedOutfit) {
+                         setInspectingOutfit(assignedOutfit);
+                       } else {
+                         setIsPlanning(p.day);
+                       }
+                     }}>
                        <span className="text-2xl md:text-4xl font-black mb-6 md:mb-12 text-gray-200 dark:text-slate-700 uppercase tracking-tighter">{p.day}</span>
                        {assignedOutfit ? (
                          <div className="w-full h-full flex flex-col items-center flex-1 justify-center animate-fade-in">
@@ -1264,16 +1360,32 @@ const Dashboard: React.FC = () => {
           <div className="absolute inset-0 bg-layer-dark/80 backdrop-blur-xl" onClick={() => setIsPostingModalOpen(false)}></div>
           <div className="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-[4rem] shadow-2xl relative z-10 overflow-hidden animate-fade-in-up flex flex-col md:flex-row">
             <div className="w-full md:w-1/2 bg-gray-50 dark:bg-slate-900 p-12 flex flex-col items-center justify-center border-r border-gray-100 dark:border-slate-700">
-              {postImage ? (
-                <div className="relative group w-full aspect-[3/4]">
-                  <img src={postImage} className="w-full h-full object-cover rounded-[3rem] shadow-2xl" />
-                  <button onClick={() => setPostImage(null)} className="absolute top-6 right-6 bg-red-500 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition opacity-0 group-hover:opacity-100"><i className="fa-solid fa-times"></i></button>
+              {postImages.length > 0 ? (
+                <div className="w-full">
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-6 snap-x snap-mandatory">
+                    {postImages.map((img, i) => (
+                      <div key={i} className="relative group w-full flex-shrink-0 snap-center aspect-[3/4]">
+                        <img src={img} className="w-full h-full object-cover rounded-[3rem] shadow-2xl border-4 border-white dark:border-slate-700" />
+                        <button 
+                          onClick={() => setPostImages(postImages.filter((_, idx) => idx !== i))} 
+                          className="absolute top-6 right-6 bg-red-500 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition opacity-0 group-hover:opacity-100"
+                        >
+                          <i className="fa-solid fa-times"></i>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <label className="flex items-center justify-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-slate-700 cursor-pointer hover:border-layer-btn transition">
+                    <i className="fa-solid fa-plus text-gray-400"></i>
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Add More</span>
+                    <input type="file" className="hidden" accept="image/*" multiple onChange={handlePostImageUpload} />
+                  </label>
                 </div>
               ) : (
                 <label className="w-full aspect-[3/4] border-4 border-dashed border-gray-200 dark:border-slate-700 rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:border-layer-btn transition-colors group">
                   <i className="fa-solid fa-cloud-arrow-up text-6xl text-gray-200 group-hover:text-layer-btn mb-6 transition"></i>
-                  <span className="font-black text-gray-400 uppercase tracking-widest text-sm">Upload Look</span>
-                  <input type="file" className="hidden" accept="image/*" onChange={handlePostImageUpload} />
+                  <span className="font-black text-gray-400 uppercase tracking-widest text-sm">Upload Looks</span>
+                  <input type="file" className="hidden" accept="image/*" multiple onChange={handlePostImageUpload} />
                 </label>
               )}
               <div className="mt-10 w-full">
@@ -1287,7 +1399,7 @@ const Dashboard: React.FC = () => {
                       key={o.id}
                       o={o}
                       items={items}
-                      setPostImage={setPostImage}
+                      setPostImages={setPostImages}
                       setPostTitle={setPostTitle}
                     />
                   ))}
@@ -1312,7 +1424,7 @@ const Dashboard: React.FC = () => {
                 
                 <button 
                   onClick={handleCreatePost}
-                  disabled={isSubmittingPost || !postTitle || !postImage}
+                  disabled={isSubmittingPost || !postTitle || postImages.length === 0}
                   className="w-full bg-layer-btn text-white py-6 rounded-3xl font-black text-xl uppercase tracking-widest shadow-2xl hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isSubmittingPost ? <i className="fa-solid fa-spinner fa-spin mr-4"></i> : <i className="fa-solid fa-paper-plane mr-4"></i>}
@@ -1387,6 +1499,34 @@ const Dashboard: React.FC = () => {
                   ))}
                 </div>
               )}
+           </div>
+        </div>
+      )}
+
+      {inspectingOutfit && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-8 bg-black/95 backdrop-blur-3xl animate-fade-in" onClick={() => setInspectingOutfit(null)}>
+           <div className="bg-white dark:bg-slate-800 rounded-[5rem] p-16 max-w-5xl w-full max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl border-8 border-gray-50 dark:border-slate-700" onClick={e => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-14">
+                <h3 className="text-5xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Neural Look: {inspectingOutfit.description}</h3>
+                <button onClick={() => setInspectingOutfit(null)} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors transform hover:rotate-90 duration-300"><i className="fa-solid fa-times text-4xl"></i></button>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                {inspectingOutfit.itemIds?.map((id, index) => {
+                  const item = items.find(i => i.id === id);
+                  if (!item) return null;
+                  return (
+                    <div key={`${id}-${index}`} className="group relative aspect-[3/4] bg-gray-50 dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-xl border-4 border-white dark:border-slate-700 hover:scale-105 transition duration-500">
+                       <img src={item.imageUrl} className="w-full h-full object-cover" />
+                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center p-6 text-center">
+                          <span className="text-xs font-black text-white uppercase tracking-widest">{item.name}</span>
+                       </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-16 p-10 bg-gray-50 dark:bg-slate-900 rounded-[3rem] border-4 border-gray-100 dark:border-slate-700">
+                 <p className="text-xl text-gray-700 dark:text-gray-300 font-bold italic">"{inspectingOutfit.reasoning}"</p>
+              </div>
            </div>
         </div>
       )}
