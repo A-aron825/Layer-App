@@ -382,8 +382,49 @@ export const autoScheduleWeek = async (items: ClothingItem[], weather: string): 
   }
 };
 
+export const generateVibeBoard = async (items: ClothingItem[]): Promise<{ title: string; mood: string; hexColors: string[]; keywords: string[] }> => {
+  const prompt = `
+    Based on this wardrobe: ${items.map(i => i.name).join(', ')}.
+    Generate a "Vibe of the Day" aesthetic profile.
+    Return JSON with a title, a mood description, 3 hex color codes that represent the vibe, and 4 keywords.
+  `;
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            mood: { type: Type.STRING },
+            hexColors: { type: Type.ARRAY, items: { type: Type.STRING } },
+            keywords: { type: Type.ARRAY, items: { type: Type.STRING } }
+          }
+        }
+      }
+    });
+    return JSON.parse(response.text || "{}");
+  } catch (error) {
+    return { title: "Minimalist Core", mood: "Clean lines and neutral tones.", hexColors: ["#FFFFFF", "#000000", "#CCCCCC"], keywords: ["Clean", "Modern", "Sleek", "Neutral"] };
+  }
+};
+
 export const matchStyleDNA = async (items: ClothingItem[], communityFeed: any[]): Promise<string[]> => {
-  const prompt = `Identify IDs of community posts that match user aesthetic.`;
+  const prompt = `
+    Analyze the user's wardrobe and the community style feed to find the best matches.
+    
+    USER WARDROBE:
+    ${items.map(i => `- ${i.name} (${i.category})`).join('\n')}
+    
+    COMMUNITY FEED:
+    ${communityFeed.map(p => `- ID: ${p.id}, Title: ${p.title}, Author: ${p.author}`).join('\n')}
+    
+    TASK:
+    Identify the IDs of the community posts that most closely align with the user's current aesthetic and wardrobe variety.
+    Return an array of matching IDs.
+  `;
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
@@ -398,6 +439,7 @@ export const matchStyleDNA = async (items: ClothingItem[], communityFeed: any[])
     });
     return JSON.parse(response.text || "[]");
   } catch (error) {
+    console.error("DNA Sync Error:", error);
     return [];
   }
 };

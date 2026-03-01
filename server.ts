@@ -27,6 +27,34 @@ async function startServer() {
   };
 
   // --- API Routes ---
+  
+  // Shared Community Feed
+  let communityPosts: any[] = [
+    { id: '1', title: 'Cyberpunk Minimalist', author: 'NeoStyle', likes: 142, imageUrl: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+    { id: '2', title: 'Streetwear Fusion', author: 'LayerKing', likes: 89, imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+    { id: '3', title: 'Cozy Oversized Vibe', author: 'SoftVibes', likes: 231, imageUrl: 'https://images.unsplash.com/photo-1508427953056-b00b8d78ebf5?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+    { id: '4', title: 'Formal Brutalism', author: 'ArchitectMode', likes: 56, imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+    { id: '5', title: 'Vintage Denim Layering', author: 'RetroSoul', likes: 312, imageUrl: 'https://images.unsplash.com/photo-1523381235312-3a1647fa9747?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+    { id: '6', title: 'Monochrome Techwear', author: 'GhostInShell', likes: 178, imageUrl: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+    { id: '7', title: 'Pastel Academia', author: 'LibraryLover', likes: 445, imageUrl: 'https://images.unsplash.com/photo-1516762689617-e1cffcef479d?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+    { id: '8', title: 'Desert Nomad Style', author: 'DuneTraveler', likes: 92, imageUrl: 'https://images.unsplash.com/photo-1475189778702-5ec9941484ae?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
+  ];
+
+  app.get("/api/community", (req, res) => {
+    res.json(communityPosts);
+  });
+
+  app.post("/api/community", (req, res) => {
+    const post = req.body;
+    const newPost = { 
+      ...post, 
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, 
+      likes: 0, 
+      timestamp: new Date().toISOString() 
+    };
+    communityPosts.unshift(newPost);
+    res.json(newPost);
+  });
 
   app.get("/api/auth/google/url", (req, res) => {
     const redirectUri = getRedirectUri(req);

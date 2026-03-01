@@ -15,6 +15,202 @@ import { backend } from '../services/backend';
 import { ClothingItem, Outfit, PlannedDay, CommunityPost } from '../types';
 import { useNavigate } from 'react-router-dom';
 
+const MiniOutfitCard = ({ o, items, setPostImage, setPostTitle }: any) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const outfitItems = o.itemIds?.map((id: string) => items.find((i: any) => i.id === id)).filter(Boolean) || [];
+  const displayImage = o.imageUrl || (outfitItems.length > 0 ? outfitItems[0]?.imageUrl : null) || `https://picsum.photos/400/600?random=${o.id}`;
+
+  useEffect(() => {
+    if (o.imageUrl || outfitItems.length <= 1 || isHovered) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        const maxScroll = scrollWidth - clientWidth;
+        
+        if (scrollLeft >= maxScroll - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          scrollRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
+        }
+      }
+    }, 4000); // Slightly slower for the modal
+
+    return () => clearInterval(interval);
+  }, [outfitItems, o.imageUrl, isHovered]);
+
+  return (
+    <div 
+      className="bg-gray-50 dark:bg-slate-900/50 rounded-[2.5rem] p-6 shadow-sm border border-gray-100 dark:border-slate-700 group/item hover:shadow-xl transition-all"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="flex justify-between items-center mb-6 px-2">
+        <div>
+          <h5 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">{o.description}</h5>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{outfitItems.length || 1} Items</p>
+        </div>
+        <button 
+          onClick={() => {
+            setPostImage(displayImage);
+            setPostTitle(o.description);
+          }}
+          className="bg-layer-btn text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition shadow-lg"
+        >
+          Select
+        </button>
+      </div>
+      <div ref={scrollRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-2 scroll-smooth">
+        {o.imageUrl ? (
+          <button 
+            onClick={() => {
+              setPostImage(o.imageUrl!);
+              setPostTitle(o.description);
+            }}
+            className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
+          >
+            <img src={o.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+          </button>
+        ) : (
+          outfitItems.map((item: any, idx: number) => (
+            <button 
+              key={`${o.id}-${item?.id}-${idx}`}
+              onClick={() => {
+                setPostImage(item?.imageUrl || displayImage);
+                setPostTitle(o.description);
+              }}
+              className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
+            >
+              <img src={item?.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center p-6 text-center">
+                <i className="fa-solid fa-plus text-white text-2xl mb-2"></i>
+                <span className="text-[10px] font-black text-white uppercase tracking-widest">{item?.name}</span>
+              </div>
+            </button>
+          ))
+        )}
+      </div>
+      {(!o.imageUrl && outfitItems.length > 1) && (
+        <div className="mt-4 flex justify-center gap-1.5">
+          {outfitItems.map((_: any, i: number) => (
+            <div key={i} className="w-1 h-1 rounded-full bg-gray-300 dark:bg-slate-700"></div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const OutfitCard = ({ outfit, items, setIsPlanning, backend, setSavedOutfits, savedOutfits, folders, openFolderMenuId, setOpenFolderMenuId, handleToggleFavoriteOutfit, handleMoveToFolder }: any) => {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const [isHovered, setIsHovered] = useState(false);
+
+  useEffect(() => {
+    if (outfit.imageUrl || !outfit.itemIds || outfit.itemIds.length <= 1 || isHovered) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        const maxScroll = scrollWidth - clientWidth;
+        
+        if (scrollLeft >= maxScroll - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          scrollRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
+        }
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [outfit.itemIds, outfit.imageUrl, isHovered]);
+
+  return (
+    <div 
+      className="bg-white dark:bg-slate-800 rounded-[3.5rem] shadow-2xl border-4 border-white dark:border-slate-700 group relative"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div className="absolute top-8 right-8 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="relative">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              setOpenFolderMenuId(openFolderMenuId === outfit.id ? null : outfit.id);
+            }}
+            className={`w-10 h-10 rounded-xl flex items-center justify-center transition shadow-lg ${openFolderMenuId === outfit.id ? 'bg-layer-primary text-white' : 'bg-white text-gray-400 hover:text-layer-primary'}`}
+          >
+            <i className="fa-solid fa-folder-open"></i>
+          </button>
+          {openFolderMenuId === outfit.id && (
+            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl py-4 z-[100] border border-gray-100 dark:border-slate-700 animate-fade-in">
+              <p className="px-6 py-2 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 dark:border-slate-700 mb-2">Move to Folder</p>
+              <button onClick={(e) => { e.stopPropagation(); handleMoveToFolder(outfit.id, null); setOpenFolderMenuId(null); }} className="w-full text-left px-6 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">None</button>
+              {folders.map((f: any) => (
+                <button key={f.id} onClick={(e) => { e.stopPropagation(); handleMoveToFolder(outfit.id, f.id); setOpenFolderMenuId(null); }} className="w-full text-left px-6 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: f.color }}></div>
+                  {f.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <button 
+          onClick={() => handleToggleFavoriteOutfit(outfit.id)}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-lg ${outfit.isFavorite ? 'bg-red-500 text-white' : 'bg-white text-gray-400'}`}
+        >
+          <i className="fa-solid fa-heart"></i>
+        </button>
+        <button onClick={() => { backend.deleteOutfit(outfit.id); setSavedOutfits(savedOutfits.filter((o: any) => o.id !== outfit.id)); }} className="w-10 h-10 bg-white text-red-400 rounded-xl flex items-center justify-center hover:text-red-600 transition shadow-lg"><i className="fa-solid fa-trash-can"></i></button>
+      </div>
+      <div className="relative group/swipe">
+        <div ref={scrollRef} className="p-8 flex gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar bg-gray-50 dark:bg-slate-900/50 scroll-smooth">
+          {outfit.imageUrl ? (
+            <div className="w-full flex-shrink-0 snap-center">
+              <img src={outfit.imageUrl} className="w-full h-80 object-cover rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-slate-700" />
+            </div>
+          ) : (
+            outfit.itemIds?.map((id: string, idx: number) => {
+              const item = items.find((i: any) => i.id === id);
+              if (!item) return null;
+              return (
+                <div key={`${id}-${idx}`} className="w-full flex-shrink-0 snap-center px-4">
+                  <div className="relative aspect-[3/4] max-h-80 mx-auto">
+                    <img src={item.imageUrl} className="w-full h-full object-cover rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-slate-700" />
+                    <div className="absolute bottom-6 left-6 right-6 bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl border border-white/30">
+                      <p className="text-[10px] font-black text-white uppercase tracking-widest truncate">{item.name}</p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+        {(!outfit.imageUrl && outfit.itemIds && outfit.itemIds.length > 1) && (
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2 pointer-events-none">
+            {outfit.itemIds.map((_: any, i: number) => (
+              <div key={i} className="w-1.5 h-1.5 rounded-full bg-layer-btn/30"></div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="p-10">
+        <div className="flex justify-between items-start mb-4">
+          <h4 className="text-3xl font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none">{outfit.description}</h4>
+        </div>
+        <p className="text-gray-500 dark:text-gray-400 font-bold italic text-sm leading-relaxed">"{outfit.reasoning}"</p>
+        <div className="mt-8 pt-6 border-t border-gray-50 dark:border-slate-700 flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <i className="fa-solid fa-calendar-day text-gray-300 text-xs"></i>
+            <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{new Date(outfit.date).toLocaleDateString()}</span>
+          </div>
+          <button onClick={() => setIsPlanning('Mon')} className="bg-gray-100 dark:bg-slate-700 text-layer-btn px-6 py-2 rounded-full font-black text-[10px] uppercase tracking-widest hover:bg-layer-btn hover:text-white transition-all shadow-sm">Plan This</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const user = backend.getCurrentUser();
@@ -47,6 +243,7 @@ const Dashboard: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStatus, setGenerationStatus] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Gap Analysis State
   const [gaps, setGaps] = useState<{missingItems: string[], reasoning: string} | null>(null);
@@ -55,6 +252,8 @@ const Dashboard: React.FC = () => {
   // Style DNA State
   const [isDNASyncing, setIsDNASyncing] = useState(false);
   const [matchedDNAIds, setMatchedDNAIds] = useState<string[]>([]);
+  const [vibeBoard, setVibeBoard] = useState<{ title: string; mood: string; hexColors: string[]; keywords: string[] } | null>(null);
+  const [isVibeLoading, setIsVibeLoading] = useState(false);
 
   // Functional Planner State
   const [plannedWeek, setPlannedWeek] = useState<PlannedDay[]>(() => {
@@ -87,6 +286,13 @@ const Dashboard: React.FC = () => {
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   const [selectedItem, setSelectedItem] = useState<ClothingItem | null>(null);
+  const [openFolderMenuId, setOpenFolderMenuId] = useState<string | null>(null);
+  
+  // Posting State
+  const [isPostingModalOpen, setIsPostingModalOpen] = useState(false);
+  const [postTitle, setPostTitle] = useState('');
+  const [postImage, setPostImage] = useState<string | null>(null);
+  const [isSubmittingPost, setIsSubmittingPost] = useState(false);
 
   useEffect(() => {
     const loadData = async () => {
@@ -137,6 +343,13 @@ const Dashboard: React.FC = () => {
   }, [plannedWeek]);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, isChatOpen]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const timer = setTimeout(() => setSuccessMessage(null), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [successMessage]);
 
   const categories = ['all', 'top', 'bottom', 'shoes', 'outerwear', 'accessory'];
 
@@ -243,7 +456,7 @@ const Dashboard: React.FC = () => {
         isFavorite: true
       });
       setSavedOutfits([res, ...savedOutfits]);
-      alert("Look added to your Favorites!");
+      setSuccessMessage("Look added to your Style Library!");
     } catch (e) {
       setErrorMessage("Failed to save look.");
     }
@@ -327,6 +540,7 @@ const Dashboard: React.FC = () => {
       setFolders([...folders, folder]);
       setNewFolderName('');
       setIsCreatingFolder(false);
+      setSuccessMessage(`Folder "${folder.name}" created.`);
     } catch (e) {
       setErrorMessage("Failed to create folder.");
     }
@@ -336,6 +550,12 @@ const Dashboard: React.FC = () => {
     try {
       const updated = await backend.updateOutfitFolder(outfitId, folderId);
       setSavedOutfits(savedOutfits.map(o => o.id === outfitId ? updated : o));
+      if (folderId) {
+        const folderName = folders.find(f => f.id === folderId)?.name;
+        setSuccessMessage(`Outfit moved to ${folderName}.`);
+      } else {
+        setSuccessMessage("Outfit removed from folder.");
+      }
     } catch (e) {
       setErrorMessage("Failed to move outfit.");
     }
@@ -426,10 +646,54 @@ const Dashboard: React.FC = () => {
     try {
       const matchedIds = await matchStyleDNA(items, communityPosts);
       setMatchedDNAIds(matchedIds);
+      setSuccessMessage("Style DNA Synced with Global Feed.");
     } catch (e) {
       setErrorMessage("Sync failed.");
     } finally {
       setIsDNASyncing(false);
+    }
+  };
+
+  const handleGenerateVibe = async () => {
+    if (!isElite) return navigate('/upgrade');
+    setIsVibeLoading(true);
+    try {
+      const res = await generateVibeBoard(items);
+      setVibeBoard(res);
+    } catch (e) {
+      setErrorMessage("Vibe generation failed.");
+    } finally {
+      setIsVibeLoading(false);
+    }
+  };
+
+  const handleCreatePost = async () => {
+    if (!postTitle.trim() || !postImage) return;
+    setIsSubmittingPost(true);
+    try {
+      const newPost = await backend.addCommunityPost({
+        title: postTitle,
+        author: user?.email.split('@')[0] || 'Anonymous',
+        imageUrl: postImage
+      });
+      setCommunityPosts([newPost, ...communityPosts]);
+      setIsPostingModalOpen(false);
+      setPostTitle('');
+      setPostImage(null);
+      setSuccessMessage("Look shared with the collective!");
+    } catch (e) {
+      setErrorMessage("Failed to share post.");
+    } finally {
+      setIsSubmittingPost(false);
+    }
+  };
+
+  const handlePostImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => setPostImage(reader.result as string);
+      reader.readAsDataURL(file);
     }
   };
 
@@ -484,6 +748,13 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
               <button onClick={() => setErrorMessage(null)} className="hover:scale-110 transition p-2"><i className="fa-solid fa-times text-xl"></i></button>
+            </div>
+          )}
+
+          {successMessage && (
+            <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[1000] bg-emerald-500 text-white px-10 py-5 rounded-3xl shadow-2xl animate-fade-in-up border-4 border-white/20 flex items-center gap-4">
+              <i className="fa-solid fa-check-circle text-2xl"></i>
+              <p className="font-black uppercase tracking-widest text-sm">{successMessage}</p>
             </div>
           )}
           
@@ -827,53 +1098,20 @@ const Dashboard: React.FC = () => {
                         if (selectedFolderId) return o.folderId === selectedFolderId;
                         return true;
                       }).map((outfit, index) => (
-                        <div key={`${outfit.id}-${index}`} className="bg-white dark:bg-slate-800 rounded-[3.5rem] shadow-2xl overflow-hidden border-4 border-white dark:border-slate-700 group relative">
-                          <div className="absolute top-8 right-8 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                            <div className="relative group/folder">
-                              <button className="w-10 h-10 bg-white text-gray-400 rounded-xl flex items-center justify-center hover:text-layer-primary transition shadow-lg"><i className="fa-solid fa-folder-open"></i></button>
-                              <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl py-4 hidden group-hover/folder:block border border-gray-100 dark:border-slate-700">
-                                <p className="px-6 py-2 text-[9px] font-black text-gray-400 uppercase tracking-widest border-b border-gray-50 dark:border-slate-700 mb-2">Move to Folder</p>
-                                <button onClick={() => handleMoveToFolder(outfit.id, null)} className="w-full text-left px-6 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700">None</button>
-                                {folders.map(f => (
-                                  <button key={f.id} onClick={() => handleMoveToFolder(outfit.id, f.id)} className="w-full text-left px-6 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 flex items-center gap-2">
-                                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: f.color }}></div>
-                                    {f.name}
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                            <button 
-                              onClick={() => handleToggleFavoriteOutfit(outfit.id)}
-                              className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-lg ${outfit.isFavorite ? 'bg-red-500 text-white' : 'bg-white text-gray-400'}`}
-                            >
-                              <i className="fa-solid fa-heart"></i>
-                            </button>
-                            <button onClick={() => { backend.deleteOutfit(outfit.id); setSavedOutfits(savedOutfits.filter(o => o.id !== outfit.id)); }} className="w-10 h-10 bg-white text-red-400 rounded-xl flex items-center justify-center hover:text-red-600 transition shadow-lg"><i className="fa-solid fa-trash-can"></i></button>
-                          </div>
-                          <div className="p-8 flex gap-4 overflow-x-auto no-scrollbar bg-gray-50 dark:bg-slate-900/50">
-                            {outfit.imageUrl ? (
-                              <img src={outfit.imageUrl} className="w-full h-64 object-cover rounded-2xl shadow-lg border-2 border-white dark:border-slate-700" />
-                            ) : (
-                              outfit.itemIds?.map((id, idx) => {
-                                const item = items.find(i => i.id === id);
-                                if (!item) return null;
-                                return (
-                                  <img key={`${id}-${idx}`} src={item.imageUrl} className="w-24 h-32 object-cover rounded-2xl shadow-lg border-2 border-white dark:border-slate-700 flex-shrink-0" />
-                                );
-                              })
-                            )}
-                          </div>
-                          <div className="p-10">
-                            <div className="flex justify-between items-start mb-4">
-                              <h4 className="text-2xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">{outfit.description}</h4>
-                            </div>
-                            <p className="text-gray-500 dark:text-gray-400 font-bold italic text-sm">"{outfit.reasoning}"</p>
-                            <div className="mt-8 pt-6 border-t border-gray-50 dark:border-slate-700 flex justify-between items-center">
-                              <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">{new Date(outfit.date).toLocaleDateString()}</span>
-                              <button onClick={() => setIsPlanning('Mon')} className="text-layer-btn font-black text-[10px] uppercase tracking-widest hover:underline">Plan This</button>
-                            </div>
-                          </div>
-                        </div>
+                        <OutfitCard 
+                          key={`${outfit.id}-${index}`}
+                          outfit={outfit}
+                          items={items}
+                          setIsPlanning={setIsPlanning}
+                          backend={backend}
+                          setSavedOutfits={setSavedOutfits}
+                          savedOutfits={savedOutfits}
+                          folders={folders}
+                          openFolderMenuId={openFolderMenuId}
+                          setOpenFolderMenuId={setOpenFolderMenuId}
+                          handleToggleFavoriteOutfit={handleToggleFavoriteOutfit}
+                          handleMoveToFolder={handleMoveToFolder}
+                        />
                       ))}
                     </div>
                   )}
@@ -893,12 +1131,17 @@ const Dashboard: React.FC = () => {
                     <button onClick={() => setExploreSubTab('feed')} className={`px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${exploreSubTab === 'feed' ? 'bg-white dark:bg-slate-700 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Global Feed</button>
                     <button onClick={() => setExploreSubTab('vibe')} className={`px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${exploreSubTab === 'vibe' ? 'bg-white dark:bg-slate-700 text-purple-500 shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Vibe Board <div className="scale-75 md:scale-100"><FeatureLock tier="Elite" label="ELITE" /></div></button>
                  </div>
-                 <div className="relative w-full md:w-auto">
-                    <button onClick={handleDNASync} disabled={isDNASyncing} className={`w-full md:w-auto px-8 py-4 md:px-12 md:py-6 rounded-xl md:rounded-3xl font-black text-xs md:text-sm uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 ${isPro ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-400 opacity-60'}`}>
-                      {isDNASyncing ? <i className="fa-solid fa-dna fa-spin"></i> : <i className="fa-solid fa-dna"></i>} Sync DNA
+                 <div className="flex gap-4 items-center">
+                    <button onClick={() => setIsPostingModalOpen(true)} className="bg-layer-btn text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-105 transition flex items-center gap-3">
+                      <i className="fa-solid fa-plus"></i> Post
                     </button>
-                    {!isPro && <div className="absolute -top-2 -right-2 z-10 scale-75 md:scale-100"><FeatureLock tier="Pro" label="PRO" /></div>}
-                 </div>
+                    <div className="relative w-full md:w-auto">
+                        <button onClick={handleDNASync} disabled={isDNASyncing} className={`w-full md:w-auto px-8 py-4 md:px-12 md:py-6 rounded-xl md:rounded-3xl font-black text-xs md:text-sm uppercase tracking-widest shadow-xl transition-all flex items-center justify-center gap-3 ${isPro ? 'bg-indigo-600 text-white hover:bg-indigo-700' : 'bg-gray-200 text-gray-400 opacity-60'}`}>
+                          {isDNASyncing ? <i className="fa-solid fa-dna fa-spin"></i> : <i className="fa-solid fa-dna"></i>} Sync DNA
+                        </button>
+                        {!isPro && <div className="absolute -top-2 -right-2 z-10 scale-75 md:scale-100"><FeatureLock tier="Pro" label="PRO" /></div>}
+                    </div>
+                  </div>
               </div>
               {exploreSubTab === 'feed' ? (
                 <div className="columns-1 md:columns-2 lg:columns-3 xl:columns-4 gap-10 space-y-10 animate-fade-in">
@@ -926,9 +1169,46 @@ const Dashboard: React.FC = () => {
                   })}
                 </div>
               ) : (
-                <div className="animate-fade-in bg-slate-900/50 backdrop-blur-xl p-24 rounded-[4rem] border-4 border-dashed border-purple-500/30 text-center relative overflow-hidden">
-                  <h3 className="text-5xl font-black text-white mb-6 uppercase tracking-tighter">Vibe Board Discovery</h3>
-                  <p className="text-slate-400 text-xl font-bold leading-relaxed mb-12">Swipe through curated aesthetics. Coming Soon for Elite members.</p>
+                <div className="animate-fade-in">
+                  {!vibeBoard ? (
+                    <div className="bg-slate-900/50 backdrop-blur-xl p-24 rounded-[4rem] border-4 border-dashed border-purple-500/30 text-center relative overflow-hidden">
+                      <div className="absolute inset-0 opacity-20">
+                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 animate-pulse"></div>
+                      </div>
+                      <h3 className="text-5xl font-black text-white mb-6 uppercase tracking-tighter relative z-10">Vibe Board Discovery</h3>
+                      <p className="text-slate-400 text-xl font-bold leading-relaxed mb-12 relative z-10">Synthesize your personal aesthetic from your Style DNA.</p>
+                      <button 
+                        onClick={handleGenerateVibe}
+                        disabled={isVibeLoading}
+                        className="relative z-10 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-16 py-6 rounded-3xl font-black text-xl uppercase tracking-widest shadow-2xl hover:scale-105 transition-all"
+                      >
+                        {isVibeLoading ? <i className="fa-solid fa-atom fa-spin mr-4"></i> : <i className="fa-solid fa-wand-magic-sparkles mr-4"></i>}
+                        Generate Vibe
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-white dark:bg-slate-800 p-16 rounded-[4rem] shadow-2xl border-4 border-gray-50 dark:border-slate-700 animate-fade-in">
+                      <div className="flex flex-col md:flex-row gap-16 items-center">
+                        <div className="w-full md:w-1/2 grid grid-cols-2 gap-6">
+                           {vibeBoard.hexColors.map((color, i) => (
+                             <div key={i} className={`h-48 rounded-[2.5rem] shadow-xl flex items-end p-6 ${i === 2 ? 'col-span-2' : ''}`} style={{ backgroundColor: color }}>
+                               <span className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase tracking-widest">{color}</span>
+                             </div>
+                           ))}
+                        </div>
+                        <div className="w-full md:w-1/2">
+                           <h3 className="text-6xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tighter leading-none">{vibeBoard.title}</h3>
+                           <p className="text-gray-500 dark:text-gray-400 text-2xl font-bold mb-10 leading-relaxed italic">"{vibeBoard.mood}"</p>
+                           <div className="flex flex-wrap gap-4 mb-12">
+                             {vibeBoard.keywords.map((k, i) => (
+                               <span key={i} className="bg-gray-100 dark:bg-slate-700 px-6 py-3 rounded-2xl font-black text-layer-btn dark:text-layer-primary uppercase text-xs tracking-widest">#{k}</span>
+                             ))}
+                           </div>
+                           <button onClick={() => setVibeBoard(null)} className="text-gray-400 font-black text-xs uppercase tracking-widest hover:text-layer-btn transition">Reset Vibe</button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -977,6 +1257,73 @@ const Dashboard: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Posting Modal */}
+      {isPostingModalOpen && (
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-10">
+          <div className="absolute inset-0 bg-layer-dark/80 backdrop-blur-xl" onClick={() => setIsPostingModalOpen(false)}></div>
+          <div className="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-[4rem] shadow-2xl relative z-10 overflow-hidden animate-fade-in-up flex flex-col md:flex-row">
+            <div className="w-full md:w-1/2 bg-gray-50 dark:bg-slate-900 p-12 flex flex-col items-center justify-center border-r border-gray-100 dark:border-slate-700">
+              {postImage ? (
+                <div className="relative group w-full aspect-[3/4]">
+                  <img src={postImage} className="w-full h-full object-cover rounded-[3rem] shadow-2xl" />
+                  <button onClick={() => setPostImage(null)} className="absolute top-6 right-6 bg-red-500 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition opacity-0 group-hover:opacity-100"><i className="fa-solid fa-times"></i></button>
+                </div>
+              ) : (
+                <label className="w-full aspect-[3/4] border-4 border-dashed border-gray-200 dark:border-slate-700 rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:border-layer-btn transition-colors group">
+                  <i className="fa-solid fa-cloud-arrow-up text-6xl text-gray-200 group-hover:text-layer-btn mb-6 transition"></i>
+                  <span className="font-black text-gray-400 uppercase tracking-widest text-sm">Upload Look</span>
+                  <input type="file" className="hidden" accept="image/*" onChange={handlePostImageUpload} />
+                </label>
+              )}
+              <div className="mt-10 w-full">
+                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 text-center">Or Select from Library</p>
+                <div className="flex flex-col gap-6 overflow-y-auto max-h-[450px] pr-4 no-scrollbar">
+                  {savedOutfits.length === 0 && (
+                    <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest text-center w-full py-4 opacity-50">No outfits in library yet</p>
+                  )}
+                  {savedOutfits.slice(0, 20).map(o => (
+                    <MiniOutfitCard 
+                      key={o.id}
+                      o={o}
+                      items={items}
+                      setPostImage={setPostImage}
+                      setPostTitle={setPostTitle}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="w-full md:w-1/2 p-16 flex flex-col justify-center">
+              <h3 className="text-5xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tighter">Share Style</h3>
+              <p className="text-gray-400 font-bold mb-12 uppercase tracking-widest text-xs">Broadcast your aesthetic to the collective.</p>
+              
+              <div className="space-y-8">
+                <div>
+                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Post Title</label>
+                  <input 
+                    type="text" 
+                    value={postTitle}
+                    onChange={(e) => setPostTitle(e.target.value)}
+                    placeholder="e.g. Cyberpunk Minimalist"
+                    className="w-full bg-gray-50 dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-700 rounded-2xl px-8 py-5 font-bold text-gray-900 dark:text-white focus:border-layer-btn outline-none transition"
+                  />
+                </div>
+                
+                <button 
+                  onClick={handleCreatePost}
+                  disabled={isSubmittingPost || !postTitle || !postImage}
+                  className="w-full bg-layer-btn text-white py-6 rounded-3xl font-black text-xl uppercase tracking-widest shadow-2xl hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                >
+                  {isSubmittingPost ? <i className="fa-solid fa-spinner fa-spin mr-4"></i> : <i className="fa-solid fa-paper-plane mr-4"></i>}
+                  Broadcast Look
+                </button>
+                <button onClick={() => setIsPostingModalOpen(false)} className="w-full text-gray-400 font-black text-xs uppercase tracking-widest hover:text-red-500 transition">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Chatbot UI */}
       <div className="fixed bottom-10 right-10 z-[200] flex flex-col items-end">

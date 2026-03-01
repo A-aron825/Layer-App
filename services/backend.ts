@@ -158,25 +158,33 @@ export const backend = {
   },
 
   async getCommunityPosts(): Promise<CommunityPost[]> {
-    const posts = JSON.parse(localStorage.getItem(COMMUNITY_KEY) || '[]');
-    if (posts.length === 0) {
-      const seed: CommunityPost[] = [
-        { id: '1', title: 'Cyberpunk Minimalist', author: 'NeoStyle', likes: 142, imageUrl: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
-        { id: '2', title: 'Streetwear Fusion', author: 'LayerKing', likes: 89, imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
-        { id: '3', title: 'Cozy Oversized Vibe', author: 'SoftVibes', likes: 231, imageUrl: 'https://images.unsplash.com/photo-1508427953056-b00b8d78ebf5?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
-        { id: '4', title: 'Formal Brutalism', author: 'ArchitectMode', likes: 56, imageUrl: 'https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
-      ];
-      localStorage.setItem(COMMUNITY_KEY, JSON.stringify(seed));
-      return seed;
+    try {
+      const response = await fetch('/api/community');
+      if (!response.ok) throw new Error("Failed to fetch community posts");
+      return await response.json();
+    } catch (e) {
+      console.error("Community fetch error, falling back to local:", e);
+      const posts = JSON.parse(localStorage.getItem(COMMUNITY_KEY) || '[]');
+      return posts;
     }
-    return posts;
   },
 
   async addCommunityPost(post: Omit<CommunityPost, 'id' | 'likes' | 'timestamp'>): Promise<CommunityPost> {
-    const posts = JSON.parse(localStorage.getItem(COMMUNITY_KEY) || '[]');
-    const newPost: CommunityPost = { ...post, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, likes: 0, timestamp: new Date().toISOString() };
-    posts.unshift(newPost);
-    localStorage.setItem(COMMUNITY_KEY, JSON.stringify(posts));
-    return newPost;
+    try {
+      const response = await fetch('/api/community', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(post)
+      });
+      if (!response.ok) throw new Error("Failed to add community post");
+      return await response.json();
+    } catch (e) {
+      console.error("Community add error, falling back to local:", e);
+      const posts = JSON.parse(localStorage.getItem(COMMUNITY_KEY) || '[]');
+      const newPost: CommunityPost = { ...post, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, likes: 0, timestamp: new Date().toISOString() };
+      posts.unshift(newPost);
+      localStorage.setItem(COMMUNITY_KEY, JSON.stringify(posts));
+      return newPost;
+    }
   }
 };
