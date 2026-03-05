@@ -35,45 +35,45 @@ const CommunityPostCard = ({ post, matchedDNAIds, handleFavoriteFromFeed }: any)
           scrollRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
         }
       }
-    }, 4000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [images, isHovered]);
 
   return (
     <div 
-      className={`break-inside-avoid bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden group border-4 transition-all relative ${isDNAMatch ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-50 dark:border-slate-700 hover:shadow-2xl'}`}
+      className={`break-inside-avoid bg-white dark:bg-slate-800 rounded-3xl md:rounded-[3rem] shadow-xl overflow-hidden group border-4 transition-all relative ${isDNAMatch ? 'border-indigo-500 ring-4 ring-indigo-500/20' : 'border-gray-50 dark:border-slate-700 hover:shadow-2xl'}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      {isDNAMatch && <div className="absolute top-6 left-6 z-20 bg-indigo-600 text-white px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">DNA Match</div>}
+      {isDNAMatch && <div className="absolute top-4 left-4 md:top-6 md:left-6 z-20 bg-indigo-600 text-white px-3 py-1 md:px-5 md:py-2 rounded-full text-[8px] md:text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">DNA Match</div>}
       
       <div ref={scrollRef} className="flex overflow-x-auto snap-x snap-mandatory no-scrollbar scroll-smooth">
         {images.map((img: string, i: number) => (
           <div key={i} className="w-full flex-shrink-0 snap-center">
-            <img src={img} className="w-full object-cover group-hover:scale-105 transition duration-[1.5s]" alt={post.title} />
+            <img src={img} className="w-full aspect-[4/5] object-cover group-hover:scale-105 transition duration-[1.5s]" alt={post.title} />
           </div>
         ))}
       </div>
 
       {images.length > 1 && (
-        <div className="absolute bottom-[140px] left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
+        <div className="absolute bottom-[100px] md:bottom-[140px] left-0 right-0 flex justify-center gap-1.5 pointer-events-none">
           {images.map((_: any, i: number) => (
             <div key={i} className="w-1 h-1 rounded-full bg-white/50"></div>
           ))}
         </div>
       )}
 
-      <div className="p-8">
-        <h4 className="text-2xl font-black text-gray-900 dark:text-white mb-2 uppercase tracking-tighter">{post.title}</h4>
-        <div className="flex justify-between items-center mt-6">
-          <p className="text-gray-400 font-black text-[10px] uppercase tracking-widest">@{post.author}</p>
+      <div className="p-4 md:p-8">
+        <h4 className="text-lg md:text-2xl font-black text-gray-900 dark:text-white mb-1 md:mb-2 uppercase tracking-tighter truncate">{post.title}</h4>
+        <div className="flex justify-between items-center mt-2 md:mt-6">
+          <p className="text-gray-400 font-black text-[8px] md:text-[10px] uppercase tracking-widest">@{post.author}</p>
           <button 
             onClick={() => handleFavoriteFromFeed(post)}
-            className="flex items-center gap-2 bg-gray-50 dark:bg-slate-700 px-4 py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 transition group"
+            className="flex items-center gap-1.5 md:gap-2 bg-gray-50 dark:bg-slate-700 px-3 py-1.5 md:px-4 md:py-2 rounded-full hover:bg-red-50 dark:hover:bg-red-950/20 transition group"
           >
-            <i className="fa-solid fa-heart text-gray-300 group-hover:text-red-500 text-xs transition"></i>
-            <span className="font-black text-xs text-gray-900 dark:text-white">{post.likes}</span>
+            <i className="fa-solid fa-heart text-gray-300 group-hover:text-red-500 text-[10px] md:text-xs transition"></i>
+            <span className="font-black text-[10px] md:text-xs text-gray-900 dark:text-white">{post.likes}</span>
           </button>
         </div>
       </div>
@@ -101,40 +101,40 @@ const MiniOutfitCard = ({ o, items, setPostImages, setPostTitle }: any) => {
           scrollRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
         }
       }
-    }, 4000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [outfitItems, o.imageUrl, isHovered]);
 
   return (
     <div 
-      className="bg-gray-50 dark:bg-slate-900/50 rounded-[2.5rem] p-6 shadow-sm border border-gray-100 dark:border-slate-700 group/item hover:shadow-xl transition-all"
+      className="bg-gray-50 dark:bg-slate-900/50 rounded-3xl md:rounded-[2.5rem] p-4 md:p-6 shadow-sm border border-gray-100 dark:border-slate-700 group/item hover:shadow-xl transition-all"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex justify-between items-center mb-6 px-2">
-        <div>
-          <h5 className="text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1">{o.description}</h5>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">{outfitItems.length || 1} Items</p>
+      <div className="flex justify-between items-center mb-4 md:mb-6 px-1 md:px-2">
+        <div className="flex-1 min-w-0 mr-2">
+          <h5 className="text-xs md:text-sm font-black text-gray-900 dark:text-white uppercase tracking-tighter leading-none mb-1 truncate">{o.description}</h5>
+          <p className="text-[8px] md:text-[9px] font-bold text-gray-400 uppercase tracking-widest">{outfitItems.length || 1} Items</p>
         </div>
         <button 
           onClick={() => {
             setPostImages(displayImages);
             setPostTitle(o.description);
           }}
-          className="bg-layer-btn text-white px-6 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:scale-105 transition shadow-lg"
+          className="bg-layer-btn text-white px-4 py-1.5 md:px-6 md:py-2 rounded-lg md:rounded-xl text-[8px] md:text-[10px] font-black uppercase tracking-widest hover:scale-105 transition shadow-lg whitespace-nowrap"
         >
           Select
         </button>
       </div>
-      <div ref={scrollRef} className="flex gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-2 scroll-smooth">
+      <div ref={scrollRef} className="flex gap-3 md:gap-4 overflow-x-auto snap-x snap-mandatory no-scrollbar pb-2 scroll-smooth">
         {o.imageUrl ? (
           <button 
             onClick={() => {
               setPostImages([o.imageUrl!]);
               setPostTitle(o.description);
             }}
-            className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
+            className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-2xl md:rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
           >
             <img src={o.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
           </button>
@@ -146,12 +146,12 @@ const MiniOutfitCard = ({ o, items, setPostImages, setPostTitle }: any) => {
                 setPostImages([item?.imageUrl]);
                 setPostTitle(o.description);
               }}
-              className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
+              className="w-full flex-shrink-0 snap-center aspect-[3/4] rounded-2xl md:rounded-[2rem] overflow-hidden border-4 border-transparent hover:border-layer-btn transition shadow-xl relative group"
             >
               <img src={item?.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition duration-500" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center p-6 text-center">
-                <i className="fa-solid fa-plus text-white text-2xl mb-2"></i>
-                <span className="text-[10px] font-black text-white uppercase tracking-widest">{item?.name}</span>
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex flex-col items-center justify-center p-4 md:p-6 text-center">
+                <i className="fa-solid fa-plus text-white text-xl md:text-2xl mb-1 md:mb-2"></i>
+                <span className="text-[8px] md:text-[10px] font-black text-white uppercase tracking-widest line-clamp-2">{item?.name}</span>
               </div>
             </button>
           ))
@@ -186,27 +186,27 @@ const OutfitCard = ({ outfit, items, setIsPlanning, backend, setSavedOutfits, sa
           scrollRef.current.scrollBy({ left: clientWidth, behavior: 'smooth' });
         }
       }
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(interval);
   }, [outfit.itemIds, outfit.imageUrl, isHovered]);
 
   return (
     <div 
-      className="bg-white dark:bg-slate-800 rounded-[3.5rem] shadow-2xl border-4 border-white dark:border-slate-700 group relative"
+      className="bg-white dark:bg-slate-800 rounded-3xl md:rounded-[3.5rem] shadow-2xl border-4 border-white dark:border-slate-700 group relative"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="absolute top-8 right-8 flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+      <div className="absolute top-4 right-4 md:top-8 md:right-8 flex gap-2 md:gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-10">
         <div className="relative">
           <button 
             onClick={(e) => {
               e.stopPropagation();
               setOpenFolderMenuId(openFolderMenuId === outfit.id ? null : outfit.id);
             }}
-            className={`w-10 h-10 rounded-xl flex items-center justify-center transition shadow-lg ${openFolderMenuId === outfit.id ? 'bg-layer-primary text-white' : 'bg-white text-gray-400 hover:text-layer-primary'}`}
+            className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center transition shadow-lg ${openFolderMenuId === outfit.id ? 'bg-layer-primary text-white' : 'bg-white text-gray-400 hover:text-layer-primary'}`}
           >
-            <i className="fa-solid fa-folder-open"></i>
+            <i className="fa-solid fa-folder-open text-xs md:text-base"></i>
           </button>
           {openFolderMenuId === outfit.id && (
             <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-slate-800 rounded-2xl shadow-2xl py-4 z-[100] border border-gray-100 dark:border-slate-700 animate-fade-in">
@@ -223,28 +223,29 @@ const OutfitCard = ({ outfit, items, setIsPlanning, backend, setSavedOutfits, sa
         </div>
         <button 
           onClick={() => handleToggleFavoriteOutfit(outfit.id)}
-          className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shadow-lg ${outfit.isFavorite ? 'bg-red-500 text-white' : 'bg-white text-gray-400'}`}
+          className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center transition-all shadow-lg ${outfit.isFavorite ? 'bg-red-500 text-white' : 'bg-white/50 text-gray-200 border border-gray-100 dark:border-slate-700'}`}
+          title={outfit.isFavorite ? "Unfavorite" : "Favorite"}
         >
-          <i className="fa-solid fa-heart"></i>
+          <i className="fa-solid fa-heart text-xs md:text-base"></i>
         </button>
-        <button onClick={() => { backend.deleteOutfit(outfit.id); setSavedOutfits(savedOutfits.filter((o: any) => o.id !== outfit.id)); }} className="w-10 h-10 bg-white text-red-400 rounded-xl flex items-center justify-center hover:text-red-600 transition shadow-lg"><i className="fa-solid fa-trash-can"></i></button>
+        <button onClick={() => { backend.deleteOutfit(outfit.id); setSavedOutfits(savedOutfits.filter((o: any) => o.id !== outfit.id)); }} className="w-8 h-8 md:w-10 md:h-10 bg-white text-red-400 rounded-lg md:rounded-xl flex items-center justify-center hover:text-red-600 transition shadow-lg"><i className="fa-solid fa-trash-can text-xs md:text-base"></i></button>
       </div>
       <div className="relative group/swipe">
-        <div ref={scrollRef} className="p-8 flex gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar bg-gray-50 dark:bg-slate-900/50 scroll-smooth">
+        <div ref={scrollRef} className="p-4 md:p-8 flex gap-4 md:gap-6 overflow-x-auto snap-x snap-mandatory no-scrollbar bg-gray-50 dark:bg-slate-900/50 scroll-smooth">
           {outfit.imageUrl ? (
             <div className="w-full flex-shrink-0 snap-center">
-              <img src={outfit.imageUrl} className="w-full h-80 object-cover rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-slate-700" />
+              <img src={outfit.imageUrl} className="w-full h-64 md:h-80 object-cover rounded-2xl md:rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-slate-700" />
             </div>
           ) : (
             outfit.itemIds?.map((id: string, idx: number) => {
               const item = items.find((i: any) => i.id === id);
               if (!item) return null;
               return (
-                <div key={`${id}-${idx}`} className="w-full flex-shrink-0 snap-center px-4">
-                  <div className="relative aspect-[3/4] max-h-80 mx-auto">
-                    <img src={item.imageUrl} className="w-full h-full object-cover rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-slate-700" />
-                    <div className="absolute bottom-6 left-6 right-6 bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl border border-white/30">
-                      <p className="text-[10px] font-black text-white uppercase tracking-widest truncate">{item.name}</p>
+                <div key={`${id}-${idx}`} className="w-full flex-shrink-0 snap-center px-2 md:px-4">
+                  <div className="relative aspect-[3/4] h-64 md:h-80 mx-auto">
+                    <img src={item.imageUrl} className="w-full h-full object-cover rounded-2xl md:rounded-[2.5rem] shadow-2xl border-4 border-white dark:border-slate-700" />
+                    <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6 bg-white/20 backdrop-blur-md px-3 py-1.5 md:px-4 md:py-2 rounded-lg md:rounded-xl border border-white/30">
+                      <p className="text-[8px] md:text-[10px] font-black text-white uppercase tracking-widest truncate">{item.name}</p>
                     </div>
                   </div>
                 </div>
@@ -318,22 +319,17 @@ const Dashboard: React.FC = () => {
   // Style DNA State
   const [isDNASyncing, setIsDNASyncing] = useState(false);
   const [matchedDNAIds, setMatchedDNAIds] = useState<string[]>([]);
-  const [vibeBoard, setVibeBoard] = useState<{ title: string; mood: string; hexColors: string[]; keywords: string[] } | null>(null);
-  const [isVibeLoading, setIsVibeLoading] = useState(false);
 
   // Functional Planner State
-  const [plannedWeek, setPlannedWeek] = useState<PlannedDay[]>(() => {
-    const saved = localStorage.getItem('layer_planner_v3');
-    return saved ? JSON.parse(saved) : [
-      { day: 'Mon', outfitId: null, note: '' },
-      { day: 'Tue', outfitId: null, note: '' },
-      { day: 'Wed', outfitId: null, note: '' },
-      { day: 'Thu', outfitId: null, note: '' },
-      { day: 'Fri', outfitId: null, note: '' },
-      { day: 'Sat', outfitId: null, note: '' },
-      { day: 'Sun', outfitId: null, note: '' }
-    ];
-  });
+  const [plannedWeek, setPlannedWeek] = useState<PlannedDay[]>([
+    { day: 'Mon', outfitId: null, note: '' },
+    { day: 'Tue', outfitId: null, note: '' },
+    { day: 'Wed', outfitId: null, note: '' },
+    { day: 'Thu', outfitId: null, note: '' },
+    { day: 'Fri', outfitId: null, note: '' },
+    { day: 'Sat', outfitId: null, note: '' },
+    { day: 'Sun', outfitId: null, note: '' }
+  ]);
   const [isPlanning, setIsPlanning] = useState<string | null>(null);
   const [isAutoScheduling, setIsAutoScheduling] = useState(false);
 
@@ -346,7 +342,7 @@ const Dashboard: React.FC = () => {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState("");
   const [chatHistory, setChatHistory] = useState<{role: string, text: string}[]>([
-    { role: 'model', text: "Ready to elevate your aesthetic? I'm your Style Pro assistant." }
+    { role: 'model', text: "Hello! I'm your style assistant. How can I help you with your wardrobe today?" }
   ]);
   const [isChatLoading, setIsChatLoading] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -366,16 +362,18 @@ const Dashboard: React.FC = () => {
       if (!user) return navigate('/login');
       setIsLoadingData(true);
       try {
-        const [i, o, cp, f] = await Promise.all([
+        const [i, o, cp, f, p] = await Promise.all([
           backend.getItems(), 
           backend.getOutfits(),
           backend.getCommunityPosts(),
-          backend.getFolders()
+          backend.getFolders(),
+          backend.getPlanner()
         ]);
         setItems(i);
         setSavedOutfits(o);
         setCommunityPosts(cp);
         setFolders(f);
+        setPlannedWeek(p);
         
         if ("geolocation" in navigator) {
           navigator.geolocation.getCurrentPosition(async (pos) => {
@@ -406,7 +404,9 @@ const Dashboard: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    localStorage.setItem('layer_planner_v3', JSON.stringify(plannedWeek));
+    if (plannedWeek.length > 0) {
+      backend.savePlanner(plannedWeek).catch(console.error);
+    }
   }, [plannedWeek]);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, isChatOpen]);
@@ -622,21 +622,32 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  const isLookSaved = generatedLook && savedOutfits.some(o => o.description === generatedLook.description && o.itemIds?.join(',') === generatedLook.itemIds?.join(','));
+  const savedOutfitVersion = generatedLook ? savedOutfits.find(o => o.description === generatedLook.description && o.itemIds?.join(',') === generatedLook.itemIds?.join(',')) : null;
+  const isLookSaved = !!savedOutfitVersion;
+  const isLookFavorited = savedOutfitVersion?.isFavorite;
 
   const handleSaveOutfit = async () => {
     if (!generatedLook) return;
-    if (isLookSaved) {
-      setErrorMessage("This look is already in your collection.");
+    
+    if (savedOutfitVersion) {
+      // Toggle favorite if already saved
+      await handleToggleFavoriteOutfit(savedOutfitVersion.id);
       return;
     }
-    const res = await backend.saveOutfit({
-      description: generatedLook.description,
-      reasoning: generatedLook.reasoning,
-      date: new Date().toISOString(),
-      itemIds: generatedLook.itemIds
-    });
-    setSavedOutfits([res, ...savedOutfits]);
+
+    try {
+      const res = await backend.saveOutfit({
+        description: generatedLook.description,
+        reasoning: generatedLook.reasoning,
+        date: new Date().toISOString(),
+        itemIds: generatedLook.itemIds,
+        isFavorite: true
+      });
+      setSavedOutfits([res, ...savedOutfits]);
+      setSuccessMessage("Look saved to Library and added to Favorites.");
+    } catch (e) {
+      setErrorMessage("Failed to save look.");
+    }
   };
 
   const handleCreateFolder = async () => {
@@ -737,6 +748,7 @@ const Dashboard: React.FC = () => {
         }
         setSavedOutfits(prev => [...newlySavedOutfits, ...prev]);
         setPlannedWeek(newPlanner);
+        await backend.savePlanner(newPlanner);
         alert("Magic Schedule Initialized.");
       }
     } catch (e) {
@@ -757,19 +769,6 @@ const Dashboard: React.FC = () => {
       setErrorMessage("Sync failed.");
     } finally {
       setIsDNASyncing(false);
-    }
-  };
-
-  const handleGenerateVibe = async () => {
-    if (!isElite) return navigate('/upgrade');
-    setIsVibeLoading(true);
-    try {
-      const res = await generateVibeBoard(items);
-      setVibeBoard(res);
-    } catch (e) {
-      setErrorMessage("Vibe generation failed.");
-    } finally {
-      setIsVibeLoading(false);
     }
   };
 
@@ -812,9 +811,25 @@ const Dashboard: React.FC = () => {
     setPostImages([...postImages, ...newImages]);
   };
 
-  const handlePlannerAssign = (day: string, outfitId: string) => {
-    setPlannedWeek(plannedWeek.map(p => p.day === day ? { ...p, outfitId } : p));
+  const handlePlannerAssign = async (day: string, outfitId: string) => {
+    const newPlanner = plannedWeek.map(p => p.day === day ? { ...p, outfitId } : p);
+    setPlannedWeek(newPlanner);
     setIsPlanning(null);
+    try {
+      await backend.savePlanner(newPlanner);
+    } catch (e) {
+      setErrorMessage("Failed to save plan.");
+    }
+  };
+
+  const handleClearDay = async (day: string) => {
+    const newPlanner = plannedWeek.map(p => p.day === day ? { ...p, outfitId: null } : p);
+    setPlannedWeek(newPlanner);
+    try {
+      await backend.savePlanner(newPlanner);
+    } catch (e) {
+      setErrorMessage("Failed to clear plan.");
+    }
   };
 
   const FeatureLock = ({ tier, label }: { tier: 'Pro' | 'Elite', label: string }) => {
@@ -833,26 +848,26 @@ const Dashboard: React.FC = () => {
     <div className="bg-layer-bg dark:bg-slate-900 min-h-screen font-sans flex flex-col relative overflow-x-hidden transition-colors duration-300">
       <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
       
-      <div className="flex-grow pb-32">
-        <div className="w-full text-white py-8 md:py-16 text-center shadow-2xl relative overflow-hidden"
+      <div className="flex-grow pb-20 md:pb-32">
+        <div className="w-full text-white py-6 md:py-16 text-center shadow-2xl relative overflow-hidden"
              style={{ 
                backgroundColor: '#005f9e',
                backgroundImage: `linear-gradient(to bottom right, #005f9e, #6bb0d8)`,
                backgroundSize: '100% 100%'
              }}>
-          <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tighter drop-shadow-2xl animate-fade-in-up uppercase px-4">
+          <h1 className="text-2xl md:text-5xl font-black mb-2 md:mb-4 tracking-tighter drop-shadow-2xl animate-fade-in-up uppercase px-4">
             {activeTab === 'wardrobe' ? 'Wardrobe Vault' : 
              activeTab === 'outfits' ? 'Stylist Lab' : 
              activeTab === 'library' ? 'Style Library' :
              activeTab === 'explore' ? 'Explore Global Feed' : 'Scheduler'}
           </h1>
-          <div className="inline-flex items-center gap-2 md:gap-4 bg-white/10 border-2 border-white/20 backdrop-blur-2xl px-4 md:px-8 py-2 md:py-3 rounded-full shadow-inner animate-fade-in">
-              <i className="fa-solid fa-cloud-bolt text-yellow-300"></i>
-              <span className="font-black text-xs md:text-sm uppercase tracking-widest">{weather.temp}°C, {weather.condition}</span>
+          <div className="inline-flex items-center gap-2 md:gap-4 bg-white/10 border-2 border-white/20 backdrop-blur-2xl px-4 md:px-8 py-1.5 md:py-3 rounded-full shadow-inner animate-fade-in">
+              <i className="fa-solid fa-cloud-bolt text-yellow-300 text-xs md:text-base"></i>
+              <span className="font-black text-[10px] md:text-sm uppercase tracking-widest">{weather.temp}°C, {weather.condition}</span>
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-12">
+        <div className="container mx-auto px-4 py-6 md:py-12">
           {errorMessage && (
             <div className="bg-red-500 text-white p-6 rounded-2xl mb-8 flex justify-between items-start shadow-lg animate-fade-in border-4 border-white/20">
               <div className="flex gap-4">
@@ -890,46 +905,46 @@ const Dashboard: React.FC = () => {
               </div>
 
               {gaps && (
-                <div className="mb-12 bg-orange-50 dark:bg-orange-950/20 p-10 rounded-[3rem] border-4 border-orange-200 dark:border-orange-500/30 animate-fade-in-up relative shadow-xl">
-                  <button onClick={() => setGaps(null)} className="absolute top-8 right-8 text-orange-400 hover:text-orange-600 transition"><i className="fa-solid fa-times text-2xl"></i></button>
-                  <h3 className="text-3xl font-black text-orange-800 dark:text-orange-300 uppercase mb-4 tracking-tighter">Wardrobe Gaps</h3>
-                  <p className="text-orange-700 dark:text-orange-200 italic font-bold mb-8 text-lg">{gaps.reasoning}</p>
-                  <div className="flex flex-wrap gap-4">
+                <div className="mb-8 md:mb-12 bg-orange-50 dark:bg-orange-950/20 p-6 md:p-10 rounded-2xl md:rounded-[3rem] border-4 border-orange-200 dark:border-orange-500/30 animate-fade-in-up relative shadow-xl">
+                  <button onClick={() => setGaps(null)} className="absolute top-4 right-4 md:top-8 md:right-8 text-orange-400 hover:text-orange-600 transition"><i className="fa-solid fa-times text-xl md:text-2xl"></i></button>
+                  <h3 className="text-xl md:text-3xl font-black text-orange-800 dark:text-orange-300 uppercase mb-2 md:mb-4 tracking-tighter">Wardrobe Gaps</h3>
+                  <p className="text-orange-700 dark:text-orange-200 italic font-bold mb-4 md:mb-8 text-sm md:text-lg">{gaps.reasoning}</p>
+                  <div className="flex flex-wrap gap-2 md:gap-4">
                     {gaps.missingItems.map((item, i) => (
-                      <span key={i} className="bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl font-black text-orange-600 dark:text-orange-400 shadow-md uppercase text-xs tracking-widest">{item}</span>
+                      <span key={i} className="bg-white dark:bg-slate-800 px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-black text-orange-600 dark:text-orange-400 shadow-md uppercase text-[10px] md:text-xs tracking-widest">{item}</span>
                     ))}
                   </div>
                 </div>
               )}
 
               {newItemImage && (
-                <div className="mb-12 bg-white dark:bg-slate-800 p-10 rounded-[3rem] shadow-2xl border-4 border-layer-primary animate-fade-in-up flex flex-col md:flex-row gap-10 items-center">
-                   <img src={newItemImage} className="w-48 h-64 object-cover rounded-3xl shadow-xl" />
-                   <div className="flex-1">
-                      <div className="flex items-center gap-4 text-layer-primary">
-                        <i className="fa-solid fa-spinner fa-spin text-4xl"></i>
-                        <span className="text-xl font-black uppercase tracking-widest">Neural Analysis in Progress...</span>
+                <div className="mb-8 md:mb-12 bg-white dark:bg-slate-800 p-6 md:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl border-4 border-layer-primary animate-fade-in-up flex flex-col md:flex-row gap-6 md:gap-10 items-center">
+                   <img src={newItemImage} className="w-32 h-44 md:w-48 md:h-64 object-cover rounded-2xl md:rounded-3xl shadow-xl" />
+                   <div className="flex-1 text-center md:text-left">
+                      <div className="flex flex-col md:flex-row items-center gap-4 text-layer-primary">
+                        <i className="fa-solid fa-spinner fa-spin text-2xl md:text-4xl"></i>
+                        <span className="text-lg md:text-xl font-black uppercase tracking-widest">Neural Analysis...</span>
                       </div>
                    </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10">
-                <label className="aspect-[3/4] border-4 border-dashed border-gray-200 dark:border-slate-700 rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all group bg-white/20 dark:bg-slate-800/20 shadow-inner">
-                   <div className="w-20 h-20 bg-gray-50 dark:bg-slate-700 rounded-3xl flex items-center justify-center mb-6 group-hover:bg-layer-primary group-hover:text-white transition-all shadow-xl">
-                     <i className="fa-solid fa-camera-retro text-4xl"></i>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 md:gap-10">
+                <label className="aspect-[3/4] border-4 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl md:rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:bg-white dark:hover:bg-slate-800 transition-all group bg-white/20 dark:bg-slate-800/20 shadow-inner">
+                   <div className="w-12 h-12 md:w-20 md:h-20 bg-gray-50 dark:bg-slate-700 rounded-2xl md:rounded-3xl flex items-center justify-center mb-3 md:mb-6 group-hover:bg-layer-primary group-hover:text-white transition-all shadow-xl">
+                     <i className="fa-solid fa-camera-retro text-xl md:text-4xl"></i>
                    </div>
-                   <span className="text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest text-xs">New Entry</span>
+                   <span className="text-gray-400 dark:text-slate-500 font-black uppercase tracking-widest text-[8px] md:text-xs">New Entry</span>
                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                 </label>
                 {filterItems(items).map((item, index) => (
-                  <div key={`${item.id}-${index}`} className="bg-white dark:bg-slate-800 rounded-[3rem] shadow-xl overflow-hidden hover:shadow-2xl transition-all cursor-pointer group relative" onClick={() => setSelectedItem(item)}>
+                  <div key={`${item.id}-${index}`} className="bg-white dark:bg-slate-800 rounded-2xl md:rounded-[3rem] shadow-xl overflow-hidden hover:shadow-2xl transition-all cursor-pointer group relative" onClick={() => setSelectedItem(item)}>
                      <div className="aspect-[3/4] overflow-hidden relative">
                        <img src={item.imageUrl} className="w-full h-full object-cover group-hover:scale-110 transition duration-[1.2s]" />
                      </div>
-                     <div className="p-7 border-t border-gray-50 dark:border-slate-700 flex justify-between items-center">
-                        <h4 className="font-black text-gray-900 dark:text-white text-sm truncate uppercase tracking-tighter">{item.name}</h4>
-                        <i className="fa-solid fa-chevron-right text-gray-200 dark:text-slate-600"></i>
+                     <div className="p-4 md:p-7 border-t border-gray-50 dark:border-slate-700 flex justify-between items-center">
+                        <h4 className="font-black text-gray-900 dark:text-white text-[10px] md:text-sm truncate uppercase tracking-tighter">{item.name}</h4>
+                        <i className="fa-solid fa-chevron-right text-gray-200 dark:text-slate-600 text-[10px] md:text-base"></i>
                      </div>
                   </div>
                 ))}
@@ -939,15 +954,15 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'outfits' && (
             <div className="animate-fade-in-up max-w-6xl mx-auto">
-               <div className="bg-white dark:bg-slate-800 p-6 md:p-16 rounded-3xl md:rounded-[4rem] shadow-2xl mb-8 md:mb-16 border-t-[8px] md:border-t-[16px] border-layer-btn relative overflow-hidden ring-1 ring-gray-100 dark:ring-slate-700">
-                  <h2 className="text-3xl md:text-6xl font-black text-layer-dark dark:text-layer-primary mb-6 md:mb-12 tracking-tighter uppercase">Stylist Lab</h2>
+               <div className="bg-white dark:bg-slate-800 p-4 md:p-16 rounded-2xl md:rounded-[4rem] shadow-2xl mb-8 md:mb-16 border-t-[4px] md:border-t-[16px] border-layer-btn relative overflow-hidden ring-1 ring-gray-100 dark:ring-slate-700">
+                  <h2 className="text-2xl md:text-6xl font-black text-layer-dark dark:text-white mb-6 md:mb-12 tracking-tighter uppercase text-center md:text-left">Stylist Lab</h2>
                   
-                  <div className="flex gap-2 md:gap-4 bg-gray-100 dark:bg-slate-900 p-2 md:p-3 rounded-2xl md:rounded-[2rem] mb-8 md:mb-12 max-w-full overflow-x-auto no-scrollbar items-center">
+                  <div className="flex gap-2 md:gap-4 bg-gray-100 dark:bg-slate-900 p-1.5 md:p-3 rounded-xl md:rounded-[2rem] mb-6 md:mb-12 max-w-full overflow-x-auto no-scrollbar items-center">
                     {['Standard', 'Twin', 'Orbit', 'Manual'].map((mode) => {
                       const modeLocked = (mode === 'Twin' && !isElite) || (mode === 'Orbit' && !isPro);
                       const displayLabel = mode === 'Twin' ? 'Icon Match' : mode === 'Manual' ? 'Manual' : mode;
                       return (
-                        <button key={mode} onClick={() => setOutfitMode(mode as any)} className={`shrink-0 px-4 py-3 md:px-8 md:py-5 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-[0.2em] md:tracking-[0.3em] transition-all flex items-center gap-2 md:gap-3 ${outfitMode === mode ? 'bg-white dark:bg-slate-800 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>
+                        <button key={mode} onClick={() => setOutfitMode(mode as any)} className={`shrink-0 px-3 py-2 md:px-8 md:py-5 rounded-lg md:rounded-[1.5rem] font-black text-[8px] md:text-[10px] uppercase tracking-[0.1em] md:tracking-[0.3em] transition-all flex items-center gap-1.5 md:gap-3 ${outfitMode === mode ? 'bg-white dark:bg-slate-800 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>
                           {displayLabel}
                           {modeLocked && <div className="scale-75 md:scale-100"><FeatureLock tier={mode === 'Twin' ? 'Elite' : 'Pro'} label={mode === 'Twin' ? 'ELITE' : 'PRO'} /></div>}
                         </button>
@@ -956,32 +971,32 @@ const Dashboard: React.FC = () => {
                   </div>
 
                   {items.length === 0 ? (
-                    <div className="bg-layer-bg/30 dark:bg-slate-900/30 backdrop-blur-xl p-16 rounded-[3rem] border-4 border-dashed border-layer-primary text-center">
-                       <i className="fa-solid fa-box-open text-6xl mb-8 text-layer-primary"></i>
-                       <h3 className="text-3xl font-black text-layer-dark dark:text-white mb-4 uppercase">Vault Empty</h3>
-                       <p className="text-gray-500 dark:text-gray-400 mb-8 font-bold">Upload at least 3 items to the Style Vault to enable AI synthesis.</p>
-                       <button onClick={() => setActiveTab('wardrobe')} className="bg-layer-btn text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl">Go to Vault</button>
+                    <div className="bg-layer-bg/30 dark:bg-slate-900/30 backdrop-blur-xl p-8 md:p-16 rounded-2xl md:rounded-[3rem] border-4 border-dashed border-layer-primary text-center">
+                       <i className="fa-solid fa-box-open text-4xl md:text-6xl mb-4 md:mb-8 text-layer-primary"></i>
+                       <h3 className="text-xl md:text-3xl font-black text-layer-dark dark:text-white mb-2 md:mb-4 uppercase">Vault Empty</h3>
+                       <p className="text-xs md:text-gray-500 dark:text-gray-400 mb-6 md:mb-8 font-bold">Upload at least 3 items to the Style Vault to enable AI synthesis.</p>
+                       <button onClick={() => setActiveTab('wardrobe')} className="bg-layer-btn text-white px-8 py-3 md:px-12 md:py-5 rounded-xl md:rounded-2xl font-black uppercase tracking-widest shadow-2xl text-xs md:text-base">Go to Vault</button>
                     </div>
                   ) : ((outfitMode === 'Twin' && !isElite) || (outfitMode === 'Orbit' && !isPro)) ? (
-                    <div className="animate-fade-in bg-layer-bg/30 dark:bg-slate-900/30 backdrop-blur-xl p-16 rounded-[3rem] border-4 border-dashed border-layer-primary text-center">
-                       <i className={`fa-solid ${outfitMode === 'Twin' ? 'fa-crown text-purple-500' : 'fa-bolt text-blue-500'} text-6xl mb-8`}></i>
-                       <h3 className="text-3xl font-black text-layer-dark dark:text-white mb-4 uppercase">Upgrade Required</h3>
-                       <button onClick={() => navigate('/upgrade')} className="bg-layer-btn text-white px-12 py-5 rounded-2xl font-black uppercase tracking-widest shadow-2xl">Upgrade Now</button>
+                    <div className="animate-fade-in bg-layer-bg/30 dark:bg-slate-900/30 backdrop-blur-xl p-8 md:p-16 rounded-2xl md:rounded-[3rem] border-4 border-dashed border-layer-primary text-center">
+                       <i className={`fa-solid ${outfitMode === 'Twin' ? 'fa-crown text-purple-500' : 'fa-bolt text-blue-500'} text-4xl md:text-6xl mb-4 md:mb-8`}></i>
+                       <h3 className="text-xl md:text-3xl font-black text-layer-dark dark:text-white mb-2 md:mb-4 uppercase">Upgrade Required</h3>
+                       <button onClick={() => navigate('/upgrade')} className="bg-layer-btn text-white px-8 py-3 md:px-12 md:py-5 rounded-xl md:rounded-2xl font-black uppercase tracking-widest shadow-2xl text-xs md:text-base">Upgrade Now</button>
                     </div>
                   ) : (
                     <>
                       {outfitMode === 'Standard' && (
                         <div className="animate-fade-in">
-                          <div className="mb-10 bg-gray-50 dark:bg-slate-900 p-8 rounded-[3rem] shadow-inner">
-                            <label className="block text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4">Stylist Request</label>
-                            <textarea value={customOutfitRequest} onChange={(e) => setCustomOutfitRequest(e.target.value)} placeholder="e.g. 'I want an all-black look'" className="w-full bg-transparent border-none focus:ring-0 font-black text-2xl text-gray-900 dark:text-white resize-none h-32" />
+                          <div className="mb-6 md:mb-10 bg-gray-50 dark:bg-slate-900 p-4 md:p-8 rounded-2xl md:rounded-[3rem] shadow-inner">
+                            <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-2 md:mb-4">Stylist Request</label>
+                            <textarea value={customOutfitRequest} onChange={(e) => setCustomOutfitRequest(e.target.value)} placeholder="e.g. 'I want an all-black look'" className="w-full bg-transparent border-none focus:ring-0 font-black text-lg md:text-2xl text-gray-900 dark:text-white resize-none h-24 md:h-32" />
                           </div>
                           {!customOutfitRequest && (
-                            <div className="mb-14">
-                              <p className="text-gray-400 font-black text-xs uppercase tracking-widest mb-8">Vibe Selection</p>
-                              <div className="flex flex-wrap gap-5">
+                            <div className="mb-8 md:mb-14">
+                              <p className="text-gray-400 font-black text-[10px] md:text-xs uppercase tracking-widest mb-4 md:mb-8">Vibe Selection</p>
+                              <div className="flex flex-wrap gap-3 md:gap-5">
                                 {['Casual', 'Business', 'Night Out', 'Streetwear'].map(occ => (
-                                  <button key={occ} onClick={() => setOutfitOccasion(occ)} className={`px-12 py-6 rounded-3xl font-black border-4 transition-all shadow-xl ${outfitOccasion === occ ? 'bg-layer-btn text-white border-layer-btn -translate-y-3' : 'bg-white dark:bg-slate-700 text-gray-400 dark:text-gray-300 border-gray-50 dark:border-slate-600'}`}>{occ}</button>
+                                  <button key={occ} onClick={() => setOutfitOccasion(occ)} className={`px-6 py-3 md:px-12 md:py-6 rounded-xl md:rounded-3xl font-black border-2 md:border-4 transition-all shadow-xl text-[10px] md:text-base ${outfitOccasion === occ ? 'bg-layer-btn text-white border-layer-btn -translate-y-1 md:-translate-y-3' : 'bg-white dark:bg-slate-700 text-gray-400 dark:text-gray-300 border-gray-50 dark:border-slate-600'}`}>{occ}</button>
                                 ))}
                               </div>
                             </div>
@@ -1079,14 +1094,24 @@ const Dashboard: React.FC = () => {
                                   );
                                 })}
                              </div>
-                             <div className="flex justify-between items-start mb-6">
-                               <h3 className="text-4xl font-black text-layer-dark dark:text-white uppercase tracking-tighter">{generatedLook.description}</h3>
-                               <button 
-                                 onClick={handleSaveOutfit} 
-                                 className={`${isLookSaved ? 'bg-red-500' : 'bg-layer-btn'} text-white p-4 rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition`}
-                               >
-                                 <i className="fa-solid fa-heart text-2xl"></i>
-                               </button>
+                             <div className="flex justify-between items-start mb-6 gap-4">
+                               <h3 className="text-4xl font-black text-layer-dark dark:text-white uppercase tracking-tighter flex-1">{generatedLook.description}</h3>
+                               <div className="flex gap-3">
+                                 <button 
+                                   onClick={() => setGeneratedLook(null)}
+                                   className="bg-white/50 text-gray-200 p-4 rounded-2xl shadow-xl hover:text-red-500 hover:scale-110 active:scale-90 transition border border-gray-100 dark:border-slate-700"
+                                   title="Discard Look"
+                                 >
+                                   <i className="fa-solid fa-trash-can text-2xl"></i>
+                                 </button>
+                                 <button 
+                                   onClick={handleSaveOutfit} 
+                                   className={`${isLookFavorited ? 'bg-red-500 text-white' : 'bg-white/50 text-gray-200 border border-gray-100 dark:border-slate-700'} p-4 rounded-2xl shadow-xl hover:scale-110 active:scale-90 transition`}
+                                   title={isLookFavorited ? "Remove from Favorites" : "Add to Favorites"}
+                                 >
+                                   <i className="fa-solid fa-heart text-2xl"></i>
+                                 </button>
+                               </div>
                              </div>
                              <p className="text-xl text-gray-700 dark:text-gray-300 font-bold italic">"{generatedLook.reasoning}"</p>
                           </div>
@@ -1109,15 +1134,15 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'library' && (
             <div className="animate-fade-in">
-              <div className="flex flex-col md:flex-row justify-between items-center mb-12 gap-8">
-                <div>
-                  <h2 className="text-4xl md:text-6xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Style Library</h2>
-                  <p className="text-gray-400 font-bold mt-2 uppercase tracking-widest text-xs">Your curated collection of neural ensembles</p>
+              <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-12 gap-6 md:gap-8">
+                <div className="text-center md:text-left">
+                  <h2 className="text-3xl md:text-6xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Style Library</h2>
+                  <p className="text-gray-400 font-bold mt-1 md:mt-2 uppercase tracking-widest text-[8px] md:text-xs">Your curated collection of neural ensembles</p>
                 </div>
-                <div className="flex gap-2 bg-gray-100 dark:bg-slate-800 p-2 rounded-[2rem] shadow-inner">
-                  <button onClick={() => { setLibrarySubTab('all'); setSelectedFolderId(null); }} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${librarySubTab === 'all' && !selectedFolderId ? 'bg-white dark:bg-slate-700 text-layer-btn shadow-xl' : 'text-gray-400'}`}>All</button>
-                  <button onClick={() => { setLibrarySubTab('favorites'); setSelectedFolderId(null); }} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${librarySubTab === 'favorites' ? 'bg-white dark:bg-slate-700 text-red-500 shadow-xl' : 'text-gray-400'}`}>Favorites</button>
-                  <button onClick={() => setLibrarySubTab('folders')} className={`px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${librarySubTab === 'folders' || selectedFolderId ? 'bg-white dark:bg-slate-700 text-layer-primary shadow-xl' : 'text-gray-400'}`}>Folders</button>
+                <div className="flex gap-1.5 md:gap-2 bg-gray-100 dark:bg-slate-800 p-1.5 md:p-2 rounded-xl md:rounded-[2rem] shadow-inner max-w-full overflow-x-auto no-scrollbar">
+                  <button onClick={() => { setLibrarySubTab('all'); setSelectedFolderId(null); }} className={`px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${librarySubTab === 'all' && !selectedFolderId ? 'bg-white dark:bg-slate-700 text-layer-btn shadow-xl' : 'text-gray-400'}`}>All</button>
+                  <button onClick={() => { setLibrarySubTab('favorites'); setSelectedFolderId(null); }} className={`px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${librarySubTab === 'favorites' ? 'bg-white dark:bg-slate-700 text-red-500 shadow-xl' : 'text-gray-400'}`}>Favorites</button>
+                  <button onClick={() => setLibrarySubTab('folders')} className={`px-4 py-2 md:px-6 md:py-3 rounded-lg md:rounded-2xl font-black text-[8px] md:text-[10px] uppercase tracking-widest transition-all whitespace-nowrap ${librarySubTab === 'folders' || selectedFolderId ? 'bg-white dark:bg-slate-700 text-layer-primary shadow-xl' : 'text-gray-400'}`}>Folders</button>
                 </div>
               </div>
 
@@ -1233,7 +1258,7 @@ const Dashboard: React.FC = () => {
                  </div>
                  <div className="flex gap-2 md:gap-4 bg-gray-100 dark:bg-slate-800 p-2 rounded-2xl md:rounded-[2rem] shadow-inner">
                     <button onClick={() => setExploreSubTab('feed')} className={`px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all ${exploreSubTab === 'feed' ? 'bg-white dark:bg-slate-700 text-layer-btn shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Global Feed</button>
-                    <button onClick={() => setExploreSubTab('vibe')} className={`px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${exploreSubTab === 'vibe' ? 'bg-white dark:bg-slate-700 text-purple-500 shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Vibe Board <div className="scale-75 md:scale-100"><FeatureLock tier="Elite" label="ELITE" /></div></button>
+                    <button onClick={() => setExploreSubTab('vibe')} className={`px-4 py-2 md:px-8 md:py-4 rounded-xl md:rounded-[1.5rem] font-black text-[9px] md:text-[10px] uppercase tracking-widest transition-all flex items-center gap-2 ${exploreSubTab === 'vibe' ? 'bg-white dark:bg-slate-700 text-purple-500 shadow-xl scale-105' : 'text-gray-400 hover:text-gray-600'}`}>Vibe Board <span className="opacity-50 text-[8px]">(Coming Soon)</span> <div className="scale-75 md:scale-100"><FeatureLock tier="Elite" label="ELITE" /></div></button>
                  </div>
                  <div className="flex gap-4 items-center">
                     <button onClick={() => setIsPostingModalOpen(true)} className="bg-layer-btn text-white px-8 py-4 rounded-2xl font-black uppercase tracking-widest shadow-xl hover:scale-105 transition flex items-center gap-3">
@@ -1260,45 +1285,16 @@ const Dashboard: React.FC = () => {
                 </div>
               ) : (
                 <div className="animate-fade-in">
-                  {!vibeBoard ? (
-                    <div className="bg-slate-900/50 backdrop-blur-xl p-24 rounded-[4rem] border-4 border-dashed border-purple-500/30 text-center relative overflow-hidden">
-                      <div className="absolute inset-0 opacity-20">
-                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 animate-pulse"></div>
-                      </div>
-                      <h3 className="text-5xl font-black text-white mb-6 uppercase tracking-tighter relative z-10">Vibe Board Discovery</h3>
-                      <p className="text-slate-400 text-xl font-bold leading-relaxed mb-12 relative z-10">Synthesize your personal aesthetic from your Style DNA.</p>
-                      <button 
-                        onClick={handleGenerateVibe}
-                        disabled={isVibeLoading}
-                        className="relative z-10 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-16 py-6 rounded-3xl font-black text-xl uppercase tracking-widest shadow-2xl hover:scale-105 transition-all"
-                      >
-                        {isVibeLoading ? <i className="fa-solid fa-atom fa-spin mr-4"></i> : <i className="fa-solid fa-wand-magic-sparkles mr-4"></i>}
-                        Generate Vibe
-                      </button>
+                  <div className="bg-slate-900/50 backdrop-blur-xl p-24 rounded-[4rem] border-4 border-dashed border-purple-500/30 text-center relative overflow-hidden">
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-purple-500/20 to-blue-500/20 animate-pulse"></div>
                     </div>
-                  ) : (
-                    <div className="bg-white dark:bg-slate-800 p-16 rounded-[4rem] shadow-2xl border-4 border-gray-50 dark:border-slate-700 animate-fade-in">
-                      <div className="flex flex-col md:flex-row gap-16 items-center">
-                        <div className="w-full md:w-1/2 grid grid-cols-2 gap-6">
-                           {vibeBoard.hexColors.map((color, i) => (
-                             <div key={i} className={`h-48 rounded-[2.5rem] shadow-xl flex items-end p-6 ${i === 2 ? 'col-span-2' : ''}`} style={{ backgroundColor: color }}>
-                               <span className="bg-white/20 backdrop-blur-md px-4 py-2 rounded-xl text-[10px] font-black text-white uppercase tracking-widest">{color}</span>
-                             </div>
-                           ))}
-                        </div>
-                        <div className="w-full md:w-1/2">
-                           <h3 className="text-6xl font-black text-gray-900 dark:text-white mb-6 uppercase tracking-tighter leading-none">{vibeBoard.title}</h3>
-                           <p className="text-gray-500 dark:text-gray-400 text-2xl font-bold mb-10 leading-relaxed italic">"{vibeBoard.mood}"</p>
-                           <div className="flex flex-wrap gap-4 mb-12">
-                             {vibeBoard.keywords.map((k, i) => (
-                               <span key={i} className="bg-gray-100 dark:bg-slate-700 px-6 py-3 rounded-2xl font-black text-layer-btn dark:text-layer-primary uppercase text-xs tracking-widest">#{k}</span>
-                             ))}
-                           </div>
-                           <button onClick={() => setVibeBoard(null)} className="text-gray-400 font-black text-xs uppercase tracking-widest hover:text-layer-btn transition">Reset Vibe</button>
-                        </div>
-                      </div>
+                    <h3 className="text-5xl font-black text-white mb-6 uppercase tracking-tighter relative z-10">Vibe Board Discovery</h3>
+                    <p className="text-slate-400 text-xl font-bold leading-relaxed mb-12 relative z-10">Synthesize your personal aesthetic from your Style DNA.</p>
+                    <div className="relative z-10 inline-block bg-purple-500/20 backdrop-blur-md border border-purple-500/50 px-10 py-4 rounded-2xl">
+                      <span className="text-purple-400 font-black text-2xl uppercase tracking-[0.3em]">Coming Soon</span>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
             </div>
@@ -1306,10 +1302,10 @@ const Dashboard: React.FC = () => {
 
           {activeTab === 'planner' && (
             <div className="animate-fade-in">
-              <div className="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-20 gap-6">
-                <h2 className="text-4xl md:text-7xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase">Scheduler</h2>
+              <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-20 gap-6">
+                <h2 className="text-3xl md:text-7xl text-layer-dark dark:text-layer-primary font-black tracking-tighter uppercase text-center md:text-left">Scheduler</h2>
                 <div className="relative w-full md:w-auto">
-                  <button onClick={handleAutoSchedule} disabled={isAutoScheduling} className={`w-full md:w-auto px-8 py-4 md:px-12 md:py-6 rounded-xl md:rounded-3xl font-black text-lg md:text-xl uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${isPro ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
+                  <button onClick={handleAutoSchedule} disabled={isAutoScheduling} className={`w-full md:w-auto px-6 py-4 md:px-12 md:py-6 rounded-xl md:rounded-3xl font-black text-sm md:text-xl uppercase tracking-widest shadow-2xl transition-all flex items-center justify-center gap-3 ${isPro ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:scale-105' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
                     {isAutoScheduling ? <i className="fa-solid fa-wand-sparkles fa-spin"></i> : <i className="fa-solid fa-wand-sparkles"></i>} Auto-Schedule
                   </button>
                   {!isPro && <div className="absolute -top-2 -right-2 z-10 scale-75 md:scale-100"><FeatureLock tier="Pro" label="PRO" /></div>}
@@ -1319,17 +1315,17 @@ const Dashboard: React.FC = () => {
                  {plannedWeek.map(p => {
                    const assignedOutfit = savedOutfits.find(o => o.id === p.outfitId);
                    return (
-                     <div key={p.day} className={`min-h-[300px] md:min-h-[500px] bg-white dark:bg-slate-800 rounded-3xl md:rounded-[4rem] p-6 md:p-10 flex flex-col items-center shadow-2xl transition-all transform hover:-translate-y-2 md:hover:-translate-y-4 cursor-pointer relative overflow-hidden ${assignedOutfit ? 'ring-[4px] md:ring-[6px] ring-layer-btn' : 'border-2 md:border-4 border-gray-100 dark:border-slate-700'}`} onClick={() => {
+                     <div key={p.day} className={`min-h-[120px] md:min-h-[500px] bg-white dark:bg-slate-800 rounded-2xl md:rounded-[4rem] p-4 md:p-10 flex md:flex-col items-center shadow-2xl transition-all transform hover:-translate-y-1 md:hover:-translate-y-4 cursor-pointer relative overflow-hidden ${assignedOutfit ? 'ring-[3px] md:ring-[6px] ring-layer-btn' : 'border-2 md:border-4 border-gray-100 dark:border-slate-700'}`} onClick={() => {
                        if (assignedOutfit) {
                          setInspectingOutfit(assignedOutfit);
                        } else {
                          setIsPlanning(p.day);
                        }
                      }}>
-                       <span className="text-2xl md:text-4xl font-black mb-6 md:mb-12 text-gray-200 dark:text-slate-700 uppercase tracking-tighter">{p.day}</span>
+                       <span className="text-xl md:text-4xl font-black mb-0 md:mb-12 text-gray-200 dark:text-slate-700 uppercase tracking-tighter w-12 md:w-auto text-center">{p.day}</span>
                        {assignedOutfit ? (
-                         <div className="w-full h-full flex flex-col items-center flex-1 justify-center animate-fade-in">
-                            <div className="w-full aspect-[3/4] bg-gray-100 dark:bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white dark:border-slate-700 mb-8 transform group-hover:scale-105 transition">
+                         <div className="flex-1 flex md:flex-col items-center justify-between md:justify-center animate-fade-in gap-4">
+                            <div className="w-16 h-16 md:w-full md:aspect-[3/4] bg-gray-100 dark:bg-slate-900 rounded-xl md:rounded-[2.5rem] overflow-hidden shadow-xl md:shadow-2xl border-2 md:border-4 border-white dark:border-slate-700 md:mb-8 transform group-hover:scale-105 transition">
                               {/* Display first item from the outfit if itemIds exist */}
                               {assignedOutfit.itemIds && assignedOutfit.itemIds.length > 0 ? (
                                 <img src={items.find(i => i.id === assignedOutfit.itemIds?.[0])?.imageUrl} className="w-full h-full object-cover" />
@@ -1337,12 +1333,14 @@ const Dashboard: React.FC = () => {
                                 <img src={`https://picsum.photos/400/600?random=${assignedOutfit.id}`} className="w-full h-full object-cover" />
                               )}
                             </div>
-                            <p className="text-center font-black text-base text-gray-900 dark:text-white leading-tight mb-4">{assignedOutfit.description}</p>
-                            <button onClick={(e) => { e.stopPropagation(); setPlannedWeek(plannedWeek.map(x => x.day === p.day ? { ...x, outfitId: null } : x)); }} className="text-red-400 font-black text-[10px] uppercase hover:text-red-600 tracking-widest">Clear</button>
+                            <div className="flex-1 md:flex-none text-left md:text-center">
+                              <p className="font-black text-xs md:text-base text-gray-900 dark:text-white leading-tight mb-1 md:mb-4 line-clamp-1">{assignedOutfit.description}</p>
+                              <button onClick={(e) => { e.stopPropagation(); handleClearDay(p.day); }} className="text-red-400 font-black text-[8px] md:text-[10px] uppercase hover:text-red-600 tracking-widest">Clear</button>
+                            </div>
                          </div>
                        ) : (
-                         <div className="flex-1 w-full border-4 border-dashed border-gray-100 dark:border-slate-700 rounded-[3rem] flex flex-col items-center justify-center text-gray-300 dark:text-slate-600 hover:text-layer-btn transition-all">
-                            <i className="fa-solid fa-calendar-plus text-6xl"></i>
+                         <div className="flex-1 h-12 md:h-full border-2 md:border-4 border-dashed border-gray-100 dark:border-slate-700 rounded-xl md:rounded-[3rem] flex flex-col items-center justify-center text-gray-300 dark:text-slate-600 hover:text-layer-btn transition-all">
+                            <i className="fa-solid fa-calendar-plus text-2xl md:text-6xl"></i>
                          </div>
                        )}
                      </div>
@@ -1358,39 +1356,39 @@ const Dashboard: React.FC = () => {
       {isPostingModalOpen && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-10">
           <div className="absolute inset-0 bg-layer-dark/80 backdrop-blur-xl" onClick={() => setIsPostingModalOpen(false)}></div>
-          <div className="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-[4rem] shadow-2xl relative z-10 overflow-hidden animate-fade-in-up flex flex-col md:flex-row">
-            <div className="w-full md:w-1/2 bg-gray-50 dark:bg-slate-900 p-12 flex flex-col items-center justify-center border-r border-gray-100 dark:border-slate-700">
+          <div className="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-3xl md:rounded-[4rem] shadow-2xl relative z-10 overflow-hidden animate-fade-in-up flex flex-col md:flex-row max-h-[90vh] overflow-y-auto md:overflow-hidden">
+            <div className="w-full md:w-1/2 bg-gray-50 dark:bg-slate-900 p-6 md:p-12 flex flex-col items-center justify-center border-r border-gray-100 dark:border-slate-700">
               {postImages.length > 0 ? (
                 <div className="w-full">
-                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-6 snap-x snap-mandatory">
+                  <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4 md:pb-6 snap-x snap-mandatory">
                     {postImages.map((img, i) => (
-                      <div key={i} className="relative group w-full flex-shrink-0 snap-center aspect-[3/4]">
-                        <img src={img} className="w-full h-full object-cover rounded-[3rem] shadow-2xl border-4 border-white dark:border-slate-700" />
+                      <div key={i} className="relative group w-48 md:w-full flex-shrink-0 snap-center aspect-[3/4]">
+                        <img src={img} className="w-full h-full object-cover rounded-2xl md:rounded-[3rem] shadow-2xl border-4 border-white dark:border-slate-700" />
                         <button 
                           onClick={() => setPostImages(postImages.filter((_, idx) => idx !== i))} 
-                          className="absolute top-6 right-6 bg-red-500 text-white w-12 h-12 rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition opacity-0 group-hover:opacity-100"
+                          className="absolute top-4 right-4 md:top-6 md:right-6 bg-red-500 text-white w-8 h-8 md:w-12 md:h-12 rounded-full shadow-xl flex items-center justify-center hover:scale-110 transition opacity-100 md:opacity-0 md:group-hover:opacity-100"
                         >
-                          <i className="fa-solid fa-times"></i>
+                          <i className="fa-solid fa-times text-xs md:text-base"></i>
                         </button>
                       </div>
                     ))}
                   </div>
-                  <label className="flex items-center justify-center gap-4 bg-white dark:bg-slate-800 p-6 rounded-3xl border-2 border-dashed border-gray-200 dark:border-slate-700 cursor-pointer hover:border-layer-btn transition">
+                  <label className="flex items-center justify-center gap-3 md:gap-4 bg-white dark:bg-slate-800 p-4 md:p-6 rounded-2xl md:rounded-3xl border-2 border-dashed border-gray-200 dark:border-slate-700 cursor-pointer hover:border-layer-btn transition">
                     <i className="fa-solid fa-plus text-gray-400"></i>
-                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Add More</span>
+                    <span className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest">Add More</span>
                     <input type="file" className="hidden" accept="image/*" multiple onChange={handlePostImageUpload} />
                   </label>
                 </div>
               ) : (
-                <label className="w-full aspect-[3/4] border-4 border-dashed border-gray-200 dark:border-slate-700 rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:border-layer-btn transition-colors group">
-                  <i className="fa-solid fa-cloud-arrow-up text-6xl text-gray-200 group-hover:text-layer-btn mb-6 transition"></i>
-                  <span className="font-black text-gray-400 uppercase tracking-widest text-sm">Upload Looks</span>
+                <label className="w-full aspect-[3/4] border-4 border-dashed border-gray-200 dark:border-slate-700 rounded-2xl md:rounded-[3rem] flex flex-col items-center justify-center cursor-pointer hover:border-layer-btn transition-colors group">
+                  <i className="fa-solid fa-cloud-arrow-up text-4xl md:text-6xl text-gray-200 group-hover:text-layer-btn mb-4 md:mb-6 transition"></i>
+                  <span className="font-black text-gray-400 uppercase tracking-widest text-[10px] md:text-sm">Upload Looks</span>
                   <input type="file" className="hidden" accept="image/*" multiple onChange={handlePostImageUpload} />
                 </label>
               )}
-              <div className="mt-10 w-full">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-6 text-center">Or Select from Library</p>
-                <div className="flex flex-col gap-6 overflow-y-auto max-h-[450px] pr-4 no-scrollbar">
+              <div className="mt-6 md:mt-10 w-full">
+                <p className="text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] mb-4 md:mb-6 text-center">Or Select from Library</p>
+                <div className="flex flex-col gap-4 md:gap-6 overflow-y-auto max-h-[200px] md:max-h-[450px] pr-2 md:pr-4 no-scrollbar">
                   {savedOutfits.length === 0 && (
                     <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest text-center w-full py-4 opacity-50">No outfits in library yet</p>
                   )}
@@ -1406,31 +1404,31 @@ const Dashboard: React.FC = () => {
                 </div>
               </div>
             </div>
-            <div className="w-full md:w-1/2 p-16 flex flex-col justify-center">
-              <h3 className="text-5xl font-black text-gray-900 dark:text-white mb-4 uppercase tracking-tighter">Share Style</h3>
-              <p className="text-gray-400 font-bold mb-12 uppercase tracking-widest text-xs">Broadcast your aesthetic to the collective.</p>
+            <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
+              <h3 className="text-3xl md:text-5xl font-black text-gray-900 dark:text-white mb-2 md:mb-4 uppercase tracking-tighter">Share Style</h3>
+              <p className="text-gray-400 font-bold mb-6 md:mb-12 uppercase tracking-widest text-[10px] md:text-xs">Broadcast your aesthetic to the collective.</p>
               
-              <div className="space-y-8">
+              <div className="space-y-6 md:space-y-8">
                 <div>
-                  <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Post Title</label>
+                  <label className="block text-[8px] md:text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 md:mb-4">Post Title</label>
                   <input 
                     type="text" 
                     value={postTitle}
                     onChange={(e) => setPostTitle(e.target.value)}
                     placeholder="e.g. Cyberpunk Minimalist"
-                    className="w-full bg-gray-50 dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-700 rounded-2xl px-8 py-5 font-bold text-gray-900 dark:text-white focus:border-layer-btn outline-none transition"
+                    className="w-full bg-gray-50 dark:bg-slate-900 border-2 border-gray-100 dark:border-slate-700 rounded-xl md:rounded-2xl px-6 py-4 md:px-8 md:py-5 font-bold text-base md:text-lg text-gray-900 dark:text-white focus:border-layer-btn outline-none transition"
                   />
                 </div>
                 
                 <button 
                   onClick={handleCreatePost}
                   disabled={isSubmittingPost || !postTitle || postImages.length === 0}
-                  className="w-full bg-layer-btn text-white py-6 rounded-3xl font-black text-xl uppercase tracking-widest shadow-2xl hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
+                  className="w-full bg-layer-btn text-white py-4 md:py-6 rounded-2xl md:rounded-3xl font-black text-lg md:text-xl uppercase tracking-widest shadow-2xl hover:scale-105 transition-all disabled:opacity-50 disabled:hover:scale-100"
                 >
-                  {isSubmittingPost ? <i className="fa-solid fa-spinner fa-spin mr-4"></i> : <i className="fa-solid fa-paper-plane mr-4"></i>}
+                  {isSubmittingPost ? <i className="fa-solid fa-spinner fa-spin mr-3 md:mr-4"></i> : <i className="fa-solid fa-paper-plane mr-3 md:mr-4"></i>}
                   Broadcast Look
                 </button>
-                <button onClick={() => setIsPostingModalOpen(false)} className="w-full text-gray-400 font-black text-xs uppercase tracking-widest hover:text-red-500 transition">Cancel</button>
+                <button onClick={() => setIsPostingModalOpen(false)} className="w-full text-gray-400 font-black text-[10px] md:text-xs uppercase tracking-widest hover:text-red-500 transition">Cancel</button>
               </div>
             </div>
           </div>
@@ -1438,57 +1436,57 @@ const Dashboard: React.FC = () => {
       )}
 
       {/* Chatbot UI */}
-      <div className="fixed bottom-10 right-10 z-[200] flex flex-col items-end">
+      <div className="fixed bottom-4 right-4 md:bottom-10 md:right-10 z-[200] flex flex-col items-end">
          {isChatOpen && isPro && (
-           <div className={`bg-white dark:bg-slate-800 w-[500px] h-[750px] rounded-[4rem] shadow-2xl mb-10 flex flex-col overflow-hidden border border-gray-100 dark:border-slate-700 animate-fade-in-up origin-bottom-right`}>
-              <div className={`p-10 flex justify-between items-center text-white relative bg-layer-dark dark:bg-slate-950`}>
-                <div className="flex items-center gap-8">
-                  <div className={`w-20 h-20 bg-white dark:bg-slate-800 rounded-3xl flex items-center justify-center shadow-2xl ${isElite ? 'text-purple-500' : 'text-layer-dark dark:text-layer-primary'}`}>
-                    <i className={`fa-solid ${isElite ? 'fa-user-tie' : 'fa-robot'} text-4xl`}></i>
+           <div className={`bg-white dark:bg-slate-800 w-[calc(100vw-2rem)] md:w-[500px] h-[70vh] md:h-[750px] rounded-3xl md:rounded-[4rem] shadow-2xl mb-4 md:mb-10 flex flex-col overflow-hidden border border-gray-100 dark:border-slate-700 animate-fade-in-up origin-bottom-right`}>
+              <div className={`p-6 md:p-10 flex justify-between items-center text-white relative bg-layer-dark dark:bg-slate-950`}>
+                <div className="flex items-center gap-4 md:gap-8">
+                  <div className={`w-12 h-12 md:w-20 md:h-20 bg-white dark:bg-slate-800 rounded-xl md:rounded-3xl flex items-center justify-center shadow-2xl ${isElite ? 'text-purple-500' : 'text-layer-dark dark:text-layer-primary'}`}>
+                    <i className={`fa-solid ${isElite ? 'fa-user-tie' : 'fa-robot'} text-xl md:text-4xl`}></i>
                   </div>
-                  <div><p className="font-black text-3xl tracking-tighter uppercase">{isElite ? 'Master Stylist' : 'Assistant'}</p></div>
+                  <div><p className="font-black text-xl md:text-3xl tracking-tighter uppercase">{isElite ? 'Master Stylist' : 'Assistant'}</p></div>
                 </div>
-                <button onClick={() => setIsChatOpen(false)} className="bg-white/10 w-12 h-12 rounded-full hover:bg-white/20 transition-all flex items-center justify-center shadow-lg"><i className="fa-solid fa-times text-xl"></i></button>
+                <button onClick={() => setIsChatOpen(false)} className="bg-white/10 w-10 h-10 md:w-12 md:h-12 rounded-full hover:bg-white/20 transition-all flex items-center justify-center shadow-lg"><i className="fa-solid fa-times text-lg md:text-xl"></i></button>
               </div>
-              <div className={`flex-1 p-10 overflow-y-auto space-y-10 no-scrollbar bg-gray-50/70 dark:bg-slate-900/70`}>
+              <div className={`flex-1 p-6 md:p-10 overflow-y-auto space-y-6 md:space-y-10 no-scrollbar bg-gray-50/70 dark:bg-slate-900/70`}>
                 {chatHistory.map((m, i) => (
                     <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`max-w-[85%] p-8 rounded-[2.5rem] shadow-2xl text-lg font-bold animate-fade-in ${m.role === 'user' ? (isElite ? 'bg-purple-600' : 'bg-layer-btn') + ' text-white rounded-br-none' : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-bl-none border border-gray-100'}`}>
+                      <div className={`max-w-[85%] p-5 md:p-8 rounded-2xl md:rounded-[2.5rem] shadow-2xl text-sm md:text-lg font-bold animate-fade-in ${m.role === 'user' ? (isElite ? 'bg-purple-600' : 'bg-layer-btn') + ' text-white rounded-br-none' : 'bg-white dark:bg-slate-800 text-gray-800 dark:text-white rounded-bl-none border border-gray-100'}`}>
                           {m.text}
                       </div>
                     </div>
                 ))}
-                {isChatLoading && <div className="p-6 rounded-3xl w-fit shadow-2xl bg-white dark:bg-slate-800"><i className="fa-solid fa-ellipsis fa-bounce text-xl text-layer-btn"></i></div>}
+                {isChatLoading && <div className="p-4 md:p-6 rounded-2xl md:rounded-3xl w-fit shadow-2xl bg-white dark:bg-slate-800"><i className="fa-solid fa-ellipsis fa-bounce text-lg md:text-xl text-layer-btn"></i></div>}
                 <div ref={chatEndRef} />
               </div>
-              <div className={`p-10 border-t flex gap-5 border-gray-50 dark:border-slate-700 bg-white dark:bg-slate-800`}>
-                <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} className={`flex-1 rounded-[2rem] px-10 py-6 text-lg font-black outline-none transition-all shadow-inner border bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white border-gray-100 dark:border-slate-700`} placeholder="Ask advice..." />
-                <button onClick={handleSendMessage} className={`text-white w-20 h-20 rounded-[2rem] flex items-center justify-center transition-all bg-layer-dark hover:scale-110 shadow-2xl`}><i className="fa-solid fa-paper-plane text-2xl"></i></button>
+              <div className={`p-6 md:p-10 border-t flex gap-3 md:gap-5 border-gray-50 dark:border-slate-700 bg-white dark:bg-slate-800`}>
+                <input type="text" value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleSendMessage()} className={`flex-1 rounded-xl md:rounded-[2rem] px-6 py-4 md:px-10 md:py-6 text-sm md:text-lg font-black outline-none transition-all shadow-inner border bg-gray-50 dark:bg-slate-900 text-gray-900 dark:text-white border-gray-100 dark:border-slate-700`} placeholder="Ask advice..." />
+                <button onClick={handleSendMessage} className={`text-white w-14 h-14 md:w-20 md:h-20 rounded-xl md:rounded-[2rem] flex items-center justify-center transition-all bg-layer-dark hover:scale-110 shadow-2xl`}><i className="fa-solid fa-paper-plane text-xl md:text-2xl"></i></button>
               </div>
            </div>
          )}
-         <button onClick={() => { if (!isPro) { navigate('/upgrade'); return; } setIsChatOpen(!isChatOpen); }} className={`bg-layer-dark dark:bg-layer-btn text-white p-10 rounded-[3rem] shadow-2xl hover:scale-110 active:scale-90 transition-all group ring-[16px] ring-white/40 dark:ring-slate-800`}>
-           <i className={`fa-solid ${isChatOpen && isPro ? 'fa-times' : (isElite ? 'fa-user-tie' : 'fa-wand-magic-sparkles')} text-5xl`}></i>
-           {!isPro && <div className="absolute -top-4 -right-4 z-20"><FeatureLock tier="Pro" label="PRO" /></div>}
+         <button onClick={() => { if (!isPro) { navigate('/upgrade'); return; } setIsChatOpen(!isChatOpen); }} className={`bg-layer-dark dark:bg-layer-btn text-white p-6 md:p-10 rounded-2xl md:rounded-[3rem] shadow-2xl hover:scale-110 active:scale-90 transition-all group ring-[8px] md:ring-[16px] ring-white/40 dark:ring-slate-800`}>
+            <i className={`fa-solid ${isChatOpen && isPro ? 'fa-times' : (isElite ? 'fa-user-tie' : 'fa-wand-magic-sparkles')} text-3xl md:text-5xl`}></i>
+            {!isPro && <div className="absolute -top-4 -right-4 z-20"><FeatureLock tier="Pro" label="PRO" /></div>}
          </button>
       </div>
 
       {isPlanning && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-8 bg-black/95 backdrop-blur-3xl animate-fade-in">
-           <div className="bg-white dark:bg-slate-800 rounded-[5rem] p-16 max-w-5xl w-full max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl border-8 border-gray-50 dark:border-slate-700">
-              <div className="flex justify-between items-center mb-14">
-                <h3 className="text-5xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Look for: {isPlanning}</h3>
-                <button onClick={() => setIsPlanning(null)} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors transform hover:rotate-90 duration-300"><i className="fa-solid fa-times text-4xl"></i></button>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 md:p-8 bg-black/95 backdrop-blur-3xl animate-fade-in">
+           <div className="bg-white dark:bg-slate-800 rounded-3xl md:rounded-[5rem] p-6 md:p-16 max-w-5xl w-full max-h-[85vh] overflow-y-auto no-scrollbar shadow-2xl border-4 md:border-8 border-gray-50 dark:border-slate-700">
+              <div className="flex justify-between items-center mb-8 md:mb-14">
+                <h3 className="text-2xl md:text-5xl font-black text-gray-900 dark:text-white uppercase tracking-tighter">Look for: {isPlanning}</h3>
+                <button onClick={() => setIsPlanning(null)} className="text-gray-400 hover:text-black dark:hover:text-white transition-colors transform hover:rotate-90 duration-300"><i className="fa-solid fa-times text-2xl md:text-4xl"></i></button>
               </div>
               {savedOutfits.length === 0 ? (
-                <div className="text-center py-32 flex flex-col items-center">
-                  <p className="text-gray-300 dark:text-slate-600 font-black text-2xl mb-12 uppercase">No Saved Looks</p>
-                  <button onClick={() => { setActiveTab('outfits'); setIsPlanning(null); }} className="bg-layer-btn text-white px-16 py-6 rounded-3xl font-black text-xl shadow-2xl hover:scale-105 transition">Design Lab</button>
+                <div className="text-center py-16 md:py-32 flex flex-col items-center">
+                  <p className="text-gray-300 dark:text-slate-600 font-black text-xl md:text-2xl mb-8 md:mb-12 uppercase">No Saved Looks</p>
+                  <button onClick={() => { setActiveTab('outfits'); setIsPlanning(null); }} className="bg-layer-btn text-white px-10 py-4 md:px-16 md:py-6 rounded-2xl md:rounded-3xl font-black text-lg md:text-xl shadow-2xl hover:scale-105 transition">Design Lab</button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-12">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-12">
                   {savedOutfits.map((o, index) => (
-                    <div key={`${o.id}-${index}`} onClick={() => handlePlannerAssign(isPlanning, o.id)} className="bg-gray-50 dark:bg-slate-900 p-8 rounded-[3.5rem] border-8 border-transparent hover:border-layer-btn transition-all cursor-pointer group flex flex-col items-center">
+                    <div key={`${o.id}-${index}`} onClick={() => handlePlannerAssign(isPlanning, o.id)} className="bg-gray-50 dark:bg-slate-900 p-6 md:p-8 rounded-2xl md:rounded-[3.5rem] border-4 md:border-8 border-transparent hover:border-layer-btn transition-all cursor-pointer group flex flex-col items-center">
                        {o.itemIds && o.itemIds.length > 0 ? (
                          <img src={items.find(i => i.id === o.itemIds?.[0])?.imageUrl} className="w-full aspect-[3/4] object-cover rounded-[2.5rem] shadow-2xl mb-8 group-hover:scale-110 transition duration-500" />
                        ) : (

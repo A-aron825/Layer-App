@@ -45,7 +45,7 @@ const LandingPage: React.FC = () => {
 
       {/* High-Energy Geometric Banner */}
       <div 
-        className="w-full text-center py-32 md:py-64 relative overflow-hidden"
+        className="w-full text-center py-24 md:py-64 relative overflow-hidden"
         style={{ 
           backgroundColor: '#0077be',
           backgroundImage: `

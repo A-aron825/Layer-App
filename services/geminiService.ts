@@ -68,8 +68,8 @@ export const generateOutfitSuggestion = async (
     
     OUTPUT SCHEMA:
     {
-      "description": "A short, punchy, high-fashion title for the look",
-      "reasoning": "A 1-2 sentence professional styling justification",
+      "description": "A short, clear title for the look",
+      "reasoning": "A single concise sentence explaining why this works",
       "itemIds": ["id1", "id2", "id3"],
       "error": "Optional error message if no cohesive look can be formed"
     }
@@ -143,8 +143,8 @@ export const generateOutfitAroundItem = async (
     
     OUTPUT SCHEMA:
     {
-      "description": "A short, punchy title for the ensemble",
-      "reasoning": "A concise styling tip for this specific combination",
+      "description": "A short, clear title for the ensemble",
+      "reasoning": "A single concise styling tip for this combination",
       "itemIds": ["${heroItem.id}", "id2", "id3"]
     }
   `;
@@ -229,8 +229,8 @@ export const analyzeClosetItem = async (base64Image: string): Promise<any[]> => 
 export const chatWithStylist = async (message: string, history: any[], isMaster: boolean = false): Promise<string> => {
   const ai = getAI();
   const instruction = isMaster 
-    ? "You are the Master Stylist, a hyper-advanced 1:1 style persona. You analyze fashion through the lens of fit, silhouette, and confidence."
-    : "You are a professional fashion assistant.";
+    ? "You are the Master Stylist. Your advice is clear, grounded, and professional. Avoid excessive jargon, symbols, or over-the-top descriptions. Focus on practical fashion advice regarding fit, silhouette, and confidence. Keep your responses concise and easy to read."
+    : "You are a professional fashion assistant. Provide clear and helpful style advice.";
     
   try {
     const chat = ai.chats.create({
@@ -271,8 +271,8 @@ export const generateCelebrityLook = async (celebrity: string, items: ClothingIt
     
     OUTPUT SCHEMA:
     {
-      "description": "A title for the celebrity-inspired look",
-      "reasoning": "How this ensemble captures ${celebrity}'s vibe using the user's items",
+      "description": "A clear title for the look",
+      "reasoning": "A single sentence explaining how this captures the vibe",
       "itemIds": ["id1", "id2", "id3"]
     }
   `;
@@ -366,8 +366,8 @@ export const autoScheduleWeek = async (items: ClothingItem[], weather: string): 
       "schedule": [
         {
           "day": "Monday",
-          "description": "Look title",
-          "note": "Styling tip",
+          "description": "Clear look title",
+          "note": "Short styling tip",
           "itemIds": ["id1", "id2"]
         },
         ...
@@ -411,7 +411,7 @@ export const generateVibeBoard = async (items: ClothingItem[]): Promise<{ title:
   const prompt = `
     Based on this wardrobe: ${items.map(i => i.name).join(', ')}.
     Generate a "Vibe of the Day" aesthetic profile.
-    Return JSON with a title, a mood description, 3 hex color codes that represent the vibe, and 4 keywords.
+    Return JSON with a clear title, a concise mood description, 3 hex color codes, and 4 keywords.
   `;
   try {
     const response = await ai.models.generateContent({

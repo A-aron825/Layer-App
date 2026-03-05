@@ -24,7 +24,11 @@ const getRedirectUri = (req: express.Request) => {
 
 // --- API Routes ---
 
-// Shared Community Feed
+// --- In-Memory Storage (Stateless on Vercel, but shared during session) ---
+let users: any[] = [];
+let items: any[] = [];
+let outfits: any[] = [];
+let folders: any[] = [];
 let communityPosts: any[] = [
   { id: '1', title: 'Cyberpunk Minimalist', author: 'NeoStyle', likes: 142, imageUrl: 'https://images.unsplash.com/photo-1551488831-00ddcb6c6bd3?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
   { id: '2', title: 'Streetwear Fusion', author: 'LayerKing', likes: 89, imageUrl: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
@@ -36,6 +40,125 @@ let communityPosts: any[] = [
   { id: '8', title: 'Desert Nomad Style', author: 'DuneTraveler', likes: 92, imageUrl: 'https://images.unsplash.com/photo-1475189778702-5ec9941484ae?auto=format&fit=crop&q=80&w=800', timestamp: new Date().toISOString() },
 ];
 
+// --- API Routes ---
+
+// Auth
+app.post("/api/auth/signup", (req, res) => {
+  const user = req.body;
+  if (users.find(u => u.email === user.email)) {
+    return res.status(400).json({ error: "User already exists" });
+  }
+  const newUser = { ...user, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, plan: 'Starter' };
+  users.push(newUser);
+  res.json(newUser);
+});
+
+app.post("/api/auth/login", (req, res) => {
+  const { email, password } = req.body;
+  const user = users.find(u => u.email === email && u.password === password);
+  if (!user) return res.status(401).json({ error: "Invalid credentials" });
+  res.json(user);
+});
+
+app.patch("/api/auth/plan", (req, res) => {
+  const { userId, plan } = req.body;
+  const index = users.findIndex(u => u.id === userId);
+  if (index === -1) return res.status(404).json({ error: "User not found" });
+  users[index].plan = plan;
+  res.json(users[index]);
+});
+
+// Items
+app.get("/api/items", (req, res) => {
+  const { userId } = req.query;
+  res.json(items.filter(i => i.userId === userId));
+});
+
+app.post("/api/items", (req, res) => {
+  const item = req.body;
+  const newItem = { ...item, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}` };
+  items.push(newItem);
+  res.json(newItem);
+});
+
+app.delete("/api/items/:id", (req, res) => {
+  items = items.filter(i => i.id !== req.params.id);
+  res.json({ success: true });
+});
+
+// Outfits
+app.get("/api/outfits", (req, res) => {
+  const { userId } = req.query;
+  res.json(outfits.filter(o => o.userId === userId));
+});
+
+app.post("/api/outfits", (req, res) => {
+  const outfit = req.body;
+  const newOutfit = { ...outfit, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, isFavorite: outfit.isFavorite ?? false };
+  outfits.push(newOutfit);
+  res.json(newOutfit);
+});
+
+app.patch("/api/outfits/:id", (req, res) => {
+  const index = outfits.findIndex(o => o.id === req.params.id);
+  if (index === -1) return res.status(404).json({ error: "Outfit not found" });
+  outfits[index] = { ...outfits[index], ...req.body };
+  res.json(outfits[index]);
+});
+
+app.delete("/api/outfits/:id", (req, res) => {
+  outfits = outfits.filter(o => o.id !== req.params.id);
+  res.json({ success: true });
+});
+
+// Folders
+app.get("/api/folders", (req, res) => {
+  const { userId } = req.query;
+  res.json(folders.filter(f => f.userId === userId));
+});
+
+app.post("/api/folders", (req, res) => {
+  const folder = req.body;
+  const newFolder = { ...folder, id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, color: folder.color || '#6bb0d8' };
+  folders.push(newFolder);
+  res.json(newFolder);
+});
+
+app.delete("/api/folders/:id", (req, res) => {
+  folders = folders.filter(f => f.id !== req.params.id);
+  // Clear folderId from outfits
+  outfits = outfits.map(o => o.folderId === req.params.id ? { ...o, folderId: undefined } : o);
+  res.json({ success: true });
+});
+
+let plannedWeeks: any[] = [];
+
+// Planner
+app.get("/api/planner", (req, res) => {
+  const { userId } = req.query;
+  res.json(plannedWeeks.find(pw => pw.userId === userId)?.days || [
+    { day: 'Mon', outfitId: null, note: '' },
+    { day: 'Tue', outfitId: null, note: '' },
+    { day: 'Wed', outfitId: null, note: '' },
+    { day: 'Thu', outfitId: null, note: '' },
+    { day: 'Fri', outfitId: null, note: '' },
+    { day: 'Sat', outfitId: null, note: '' },
+    { day: 'Sun', outfitId: null, note: '' }
+  ]);
+});
+
+app.post("/api/planner", (req, res) => {
+  const { userId, days } = req.body;
+  const index = plannedWeeks.findIndex(pw => pw.userId === userId);
+  if (index === -1) {
+    plannedWeeks.push({ userId, days });
+  } else {
+    plannedWeeks[index].days = days;
+  }
+  res.json({ success: true });
+});
+
+// Shared Community Feed
 app.get("/api/community", (req, res) => {
   res.json(communityPosts);
 });
