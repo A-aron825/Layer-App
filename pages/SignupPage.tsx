@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { backend } from '../services/backend';
+import { supabase } from '../services/supabase';
 
 const SignupPage: React.FC = () => {
   const navigate = useNavigate();
@@ -70,24 +71,13 @@ const SignupPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const response = await fetch(`/api/auth/${provider}/url`);
-      if (!response.ok) throw new Error(`Failed to get ${provider} auth URL`);
-      const { url } = await response.json();
-
-      const width = 600;
-      const height = 700;
-      const left = window.screenX + (window.outerWidth - width) / 2;
-      const top = window.screenY + (window.outerHeight - height) / 2;
-
-      const authWindow = window.open(
-        url,
-        'oauth_popup',
-        `width=${width},height=${height},left=${left},top=${top}`
-      );
-
-      if (!authWindow) {
-        setError('Popup was blocked. Please allow popups for this site.');
-      }
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: provider as any,
+        options: {
+          redirectTo: window.location.origin + '/dashboard'
+        }
+      });
+      if (error) throw error;
     } catch (err: any) {
       setError(err.message || 'Social login failed');
     } finally {

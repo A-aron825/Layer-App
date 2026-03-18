@@ -1,57 +1,70 @@
 
 import { ClothingItem, Outfit, User, CommunityPost, Folder } from "../types";
+import { supabase } from "./supabase";
 
 const CURRENT_USER_KEY = 'layer_current_user';
-const ITEMS_KEY = 'layer_items';
-const OUTFITS_KEY = 'layer_outfits';
-const FOLDERS_KEY = 'layer_folders';
-const PLANNER_KEY = 'layer_planner';
-
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
-// Helper to get data from localStorage with fallback
-const getLocalData = <T>(key: string, fallback: T): T => {
-  const data = localStorage.getItem(key);
-  return data ? JSON.parse(data) : fallback;
-};
-
-// Helper to save data to localStorage
-const saveLocalData = <T>(key: string, data: T): void => {
-  localStorage.setItem(key, JSON.stringify(data));
-};
 
 export const backend = {
   async signup(user: Omit<User, 'id'>): Promise<User> {
-    const response = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(user)
+    const { data, error } = await supabase.auth.signUp({
+      email: user.email,
+      password: user.password || 'password123', // Fallback if not provided
+      options: {
+        data: {
+          username: user.username,
+          styles: user.styles,
+          plan: user.plan || 'Starter'
+        }
+      }
     });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Signup failed');
-    }
-    const newUser = await response.json();
+
+    if (error) throw error;
+    if (!data.user) throw new Error("Signup failed");
+
+    const newUser: User = {
+      id: data.user.id,
+      email: data.user.email!,
+      username: data.user.user_metadata.username,
+      styles: data.user.user_metadata.styles,
+      plan: data.user.user_metadata.plan
+    };
+
+    // Also save to a profiles table for easier querying if needed
+    await supabase.from('profiles').upsert({
+      id: newUser.id,
+      email: newUser.email,
+      username: newUser.username,
+      styles: newUser.styles,
+      plan: newUser.plan
+    });
+
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
     return newUser;
   },
 
   async login(email: string, password: string): Promise<User> {
-    const response = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
-    if (!response.ok) {
-      const err = await response.json();
-      throw new Error(err.error || 'Login failed');
-    }
-    const user = await response.json();
+
+    if (error) throw error;
+    if (!data.user) throw new Error("Login failed");
+
+    const user: User = {
+      id: data.user.id,
+      email: data.user.email!,
+      username: data.user.user_metadata.username,
+      styles: data.user.user_metadata.styles,
+      plan: data.user.user_metadata.plan
+    };
+
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
     return user;
   },
 
   async logout(): Promise<void> {
+    await supabase.auth.signOut();
     localStorage.removeItem(CURRENT_USER_KEY);
   },
 
@@ -63,13 +76,18 @@ export const backend = {
   async updatePlan(plan: 'Starter' | 'Pro' | 'Elite'): Promise<User> {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
-    const response = await fetch('/api/auth/plan', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId: user.id, plan })
+
+    const { data, error } = await supabase.auth.updateUser({
+      data: { plan }
     });
-    if (!response.ok) throw new Error("Failed to update plan");
-    const updatedUser = await response.json();
+
+    if (error) throw error;
+
+    const updatedUser = { ...user, plan };
+    
+    // Update profiles table too
+    await supabase.from('profiles').update({ plan }).eq('id', user.id);
+
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(updatedUser));
     return updatedUser;
   },
@@ -77,154 +95,375 @@ export const backend = {
   async getItems(): Promise<ClothingItem[]> {
     const user = this.getCurrentUser();
     if (!user) return [];
-    const allItems = getLocalData<ClothingItem[]>(ITEMS_KEY, []);
-    return allItems.filter(i => i.userId === user.id);
+
+    const { data, error } = await supabase
+      .from('clothing_items')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error("Error fetching items:", error);
+      return [];
+    }
+    
+    // Map snake_case from DB to camelCase for app
+    return (data || []).map(item => ({
+      id: item.id,
+      name: item.name,
+      type: item.type,
+      imageUrl: item.image_url,
+      category: item.category,
+      wearCount: item.wear_count,
+      lastWorn: item.last_worn ? new Date(item.last_worn) : undefined,
+      resaleValue: item.resale_value,
+      userId: item.user_id
+    }));
   },
 
   async addItem(item: Omit<ClothingItem, 'id' | 'userId'>): Promise<ClothingItem> {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
-    const newItem: ClothingItem = {
-      ...item,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      userId: user.id
+
+    const dbItem = {
+      name: item.name,
+      type: item.type,
+      image_url: item.imageUrl,
+      category: item.category,
+      wear_count: item.wearCount || 0,
+      last_worn: item.lastWorn?.toISOString(),
+      resale_value: item.resaleValue,
+      user_id: user.id
     };
-    const allItems = getLocalData<ClothingItem[]>(ITEMS_KEY, []);
-    allItems.push(newItem);
-    saveLocalData(ITEMS_KEY, allItems);
-    return newItem;
+
+    const { data, error } = await supabase
+      .from('clothing_items')
+      .insert([dbItem])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase addItem error:", error);
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      type: data.type,
+      imageUrl: data.image_url,
+      category: data.category,
+      wearCount: data.wear_count,
+      lastWorn: data.last_worn ? new Date(data.last_worn) : undefined,
+      resaleValue: data.resale_value,
+      userId: data.user_id
+    };
   },
 
   async deleteItem(itemId: string): Promise<void> {
-    const allItems = getLocalData<ClothingItem[]>(ITEMS_KEY, []);
-    const filtered = allItems.filter(i => i.id !== itemId);
-    saveLocalData(ITEMS_KEY, filtered);
+    const { error } = await supabase
+      .from('clothing_items')
+      .delete()
+      .eq('id', itemId);
+
+    if (error) {
+      console.error("Supabase deleteItem error:", error);
+      throw error;
+    }
   },
 
   async getOutfits(): Promise<Outfit[]> {
     const user = this.getCurrentUser();
     if (!user) return [];
-    const allOutfits = getLocalData<Outfit[]>(OUTFITS_KEY, []);
-    const userOutfits = allOutfits.filter(o => o.userId === user.id);
-    return userOutfits.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+    const { data, error } = await supabase
+      .from('outfits')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('date', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching outfits:", error);
+      return [];
+    }
+    
+    return (data || []).map(o => ({
+      id: o.id,
+      description: o.description,
+      reasoning: o.reasoning,
+      date: o.date,
+      userId: o.user_id,
+      itemIds: o.item_ids,
+      imageUrl: o.image_url,
+      isFavorite: o.is_favorite,
+      folderId: o.folder_id
+    }));
   },
 
   async saveOutfit(outfit: Omit<Outfit, 'id' | 'userId'>): Promise<Outfit> {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
-    const newOutfit: Outfit = {
-      ...outfit,
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      userId: user.id,
-      isFavorite: outfit.isFavorite ?? false
+
+    const dbOutfit = {
+      description: outfit.description,
+      reasoning: outfit.reasoning,
+      date: outfit.date,
+      user_id: user.id,
+      item_ids: outfit.itemIds,
+      image_url: outfit.imageUrl,
+      is_favorite: outfit.isFavorite ?? false,
+      folder_id: outfit.folderId || null
     };
-    const allOutfits = getLocalData<Outfit[]>(OUTFITS_KEY, []);
-    allOutfits.push(newOutfit);
-    saveLocalData(OUTFITS_KEY, allOutfits);
-    return newOutfit;
+
+    const { data, error } = await supabase
+      .from('outfits')
+      .insert([dbOutfit])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase saveOutfit error:", error);
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      description: data.description,
+      reasoning: data.reasoning,
+      date: data.date,
+      userId: data.user_id,
+      itemIds: data.item_ids,
+      imageUrl: data.image_url,
+      isFavorite: data.is_favorite,
+      folderId: data.folder_id
+    };
   },
 
   async toggleFavoriteOutfit(outfitId: string): Promise<Outfit> {
-    const allOutfits = getLocalData<Outfit[]>(OUTFITS_KEY, []);
-    const index = allOutfits.findIndex(o => o.id === outfitId);
-    if (index === -1) throw new Error("Outfit not found");
+    const { data: current, error: fetchError } = await supabase
+      .from('outfits')
+      .select('is_favorite')
+      .eq('id', outfitId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const { data, error } = await supabase
+      .from('outfits')
+      .update({ is_favorite: !current?.is_favorite })
+      .eq('id', outfitId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase toggleFavorite error:", error);
+      throw error;
+    }
     
-    allOutfits[index].isFavorite = !allOutfits[index].isFavorite;
-    saveLocalData(OUTFITS_KEY, allOutfits);
-    return allOutfits[index];
+    return {
+      id: data.id,
+      description: data.description,
+      reasoning: data.reasoning,
+      date: data.date,
+      userId: data.user_id,
+      itemIds: data.item_ids,
+      imageUrl: data.image_url,
+      isFavorite: data.is_favorite,
+      folderId: data.folder_id
+    };
   },
 
   async updateOutfitFolder(outfitId: string, folderId: string | null): Promise<Outfit> {
-    const allOutfits = getLocalData<Outfit[]>(OUTFITS_KEY, []);
-    const index = allOutfits.findIndex(o => o.id === outfitId);
-    if (index === -1) throw new Error("Outfit not found");
+    const { data, error } = await supabase
+      .from('outfits')
+      .update({ folder_id: folderId || null })
+      .eq('id', outfitId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase updateFolder error:", error);
+      throw error;
+    }
     
-    allOutfits[index].folderId = folderId || undefined;
-    saveLocalData(OUTFITS_KEY, allOutfits);
-    return allOutfits[index];
+    return {
+      id: data.id,
+      description: data.description,
+      reasoning: data.reasoning,
+      date: data.date,
+      userId: data.user_id,
+      itemIds: data.item_ids,
+      imageUrl: data.image_url,
+      isFavorite: data.is_favorite,
+      folderId: data.folder_id
+    };
   },
 
   async deleteOutfit(outfitId: string): Promise<void> {
-    const allOutfits = getLocalData<Outfit[]>(OUTFITS_KEY, []);
-    const filtered = allOutfits.filter(o => o.id !== outfitId);
-    saveLocalData(OUTFITS_KEY, filtered);
+    const { error } = await supabase
+      .from('outfits')
+      .delete()
+      .eq('id', outfitId);
+
+    if (error) {
+      console.error("Supabase deleteOutfit error:", error);
+      throw error;
+    }
   },
 
   async getFolders(): Promise<Folder[]> {
     const user = this.getCurrentUser();
     if (!user) return [];
-    const allFolders = getLocalData<Folder[]>(FOLDERS_KEY, []);
-    return allFolders.filter(f => f.userId === user.id);
+
+    const { data, error } = await supabase
+      .from('folders')
+      .select('*')
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error("Error fetching folders:", error);
+      return [];
+    }
+    
+    return (data || []).map(f => ({
+      id: f.id,
+      name: f.name,
+      userId: f.user_id,
+      color: f.color
+    }));
   },
 
   async createFolder(name: string, color?: string): Promise<Folder> {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
-    const newFolder: Folder = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      name,
-      color: color || '#6bb0d8',
-      userId: user.id
+
+    const { data, error } = await supabase
+      .from('folders')
+      .insert([{ 
+        name, 
+        color: color || '#6bb0d8', 
+        user_id: user.id 
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase createFolder error:", error);
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      name: data.name,
+      userId: data.user_id,
+      color: data.color
     };
-    const allFolders = getLocalData<Folder[]>(FOLDERS_KEY, []);
-    allFolders.push(newFolder);
-    saveLocalData(FOLDERS_KEY, allFolders);
-    return newFolder;
   },
 
   async deleteFolder(folderId: string): Promise<void> {
-    const allFolders = getLocalData<Folder[]>(FOLDERS_KEY, []);
-    const filtered = allFolders.filter(f => f.id !== folderId);
-    saveLocalData(FOLDERS_KEY, filtered);
-    
-    // Clear folderId from outfits
-    const allOutfits = getLocalData<Outfit[]>(OUTFITS_KEY, []);
-    const updatedOutfits = allOutfits.map(o => o.folderId === folderId ? { ...o, folderId: undefined } : o);
-    saveLocalData(OUTFITS_KEY, updatedOutfits);
+    const { error } = await supabase
+      .from('folders')
+      .delete()
+      .eq('id', folderId);
+
+    if (error) {
+      console.error("Supabase deleteFolder error:", error);
+      throw error;
+    }
+
+    // Clear folder_id from outfits (manual cascade)
+    await supabase
+      .from('outfits')
+      .update({ folder_id: null })
+      .eq('folder_id', folderId);
   },
 
   async getPlanner(): Promise<any[]> {
     const user = this.getCurrentUser();
     if (!user) return [];
-    const allPlanners = getLocalData<any[]>(PLANNER_KEY, []);
-    const userPlanner = allPlanners.find(p => p.userId === user.id);
-    return userPlanner ? userPlanner.days : [
-      { day: 'Mon', outfitId: null, note: '' },
-      { day: 'Tue', outfitId: null, note: '' },
-      { day: 'Wed', outfitId: null, note: '' },
-      { day: 'Thu', outfitId: null, note: '' },
-      { day: 'Fri', outfitId: null, note: '' },
-      { day: 'Sat', outfitId: null, note: '' },
-      { day: 'Sun', outfitId: null, note: '' }
-    ];
+
+    const { data, error } = await supabase
+      .from('planner')
+      .select('days')
+      .eq('user_id', user.id)
+      .single();
+
+    if (error || !data) {
+      return [
+        { day: 'Mon', outfitId: null, note: '' },
+        { day: 'Tue', outfitId: null, note: '' },
+        { day: 'Wed', outfitId: null, note: '' },
+        { day: 'Thu', outfitId: null, note: '' },
+        { day: 'Fri', outfitId: null, note: '' },
+        { day: 'Sat', outfitId: null, note: '' },
+        { day: 'Sun', outfitId: null, note: '' }
+      ];
+    }
+    return data.days;
   },
 
   async savePlanner(days: any[]): Promise<void> {
     const user = this.getCurrentUser();
     if (!user) throw new Error("Not authenticated");
-    const allPlanners = getLocalData<any[]>(PLANNER_KEY, []);
-    const index = allPlanners.findIndex(p => p.userId === user.id);
-    if (index === -1) {
-      allPlanners.push({ userId: user.id, days });
-    } else {
-      allPlanners[index].days = days;
-    }
-    saveLocalData(PLANNER_KEY, allPlanners);
-  },
 
-  async getCommunityPosts(): Promise<CommunityPost[]> {
-    const response = await fetch('/api/community');
-    if (!response.ok) return [];
-    return await response.json();
+    const { error } = await supabase
+      .from('planner')
+      .upsert({ user_id: user.id, days });
+
+    if (error) {
+      console.error("Supabase savePlanner error:", error);
+      throw error;
+    }
   },
 
   async addCommunityPost(post: Omit<CommunityPost, 'id' | 'likes' | 'timestamp'>): Promise<CommunityPost> {
-    const response = await fetch('/api/community', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(post)
-    });
-    if (!response.ok) throw new Error("Failed to add community post");
-    return await response.json();
+    const { data, error } = await supabase
+      .from('community_posts')
+      .insert([{ 
+        author: post.author,
+        author_image: post.authorImage,
+        content: post.content,
+        image_url: post.image,
+        likes: 0, 
+        timestamp: new Date().toISOString() 
+      }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Supabase addCommunityPost error:", error);
+      throw error;
+    }
+    
+    return {
+      id: data.id,
+      author: data.author,
+      authorImage: data.author_image,
+      content: data.content,
+      image: data.image_url,
+      likes: data.likes,
+      timestamp: data.timestamp
+    };
+  },
+
+  async getCommunityPosts(): Promise<CommunityPost[]> {
+    const { data, error } = await supabase
+      .from('community_posts')
+      .select('*')
+      .order('timestamp', { ascending: false });
+
+    if (error) {
+      console.error("Error fetching community posts:", error);
+      return [];
+    }
+    
+    return (data || []).map(p => ({
+      id: p.id,
+      author: p.author,
+      authorImage: p.author_image,
+      content: p.content,
+      image: p.image_url,
+      likes: p.likes,
+      timestamp: p.timestamp
+    }));
   }
 };

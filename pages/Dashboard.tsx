@@ -494,15 +494,21 @@ const Dashboard: React.FC = () => {
           );
 
           if (!isDuplicate) {
-            const saved = await backend.addItem({
-              name: res.name,
-              category: (res.category || 'shirt').toLowerCase() as any,
-              imageUrl: compressed,
-              type: res.category,
-              wearCount: 0
-            });
-            currentItems.push(saved);
-            totalAdded++;
+            try {
+              const saved = await backend.addItem({
+                name: res.name,
+                category: (res.category || 'shirt').toLowerCase() as any,
+                imageUrl: compressed,
+                type: res.category,
+                wearCount: 0,
+                resaleValue: res.resaleEstimate
+              });
+              currentItems.push(saved);
+              totalAdded++;
+            } catch (err) {
+              console.error("Failed to add item to vault:", err);
+              setErrorMessage(`Failed to add ${res.name} to vault.`);
+            }
           } else {
             totalSkipped++;
           }
@@ -532,13 +538,16 @@ const Dashboard: React.FC = () => {
         category: (analysisResult.category || 'shirt').toLowerCase() as any,
         imageUrl: newItemImage,
         type: analysisResult.category,
-        wearCount: 0
+        wearCount: 0,
+        resaleValue: analysisResult.resaleEstimate
       });
       setItems([...items, saved]);
       setNewItemImage(null);
       setAnalysisResult(null);
+      setSuccessMessage("Item successfully added to your vault.");
     } catch (e) {
-      setErrorMessage("Style Vault is full.");
+      console.error("Error saving new item:", e);
+      setErrorMessage("Failed to save item to vault.");
     }
   };
 
