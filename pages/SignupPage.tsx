@@ -61,7 +61,12 @@ const SignupPage: React.FC = () => {
       });
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || "Failed to create account");
+      console.error("Signup attempt failed:", err);
+      if (err.message?.includes('User already registered')) {
+        setError('An account with this email already exists. Try logging in instead.');
+      } else {
+        setError(err.message || "Failed to create account. Please check the console.");
+      }
     } finally {
       setLoading(false);
     }

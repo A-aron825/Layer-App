@@ -45,7 +45,14 @@ const LoginPage: React.FC = () => {
       await backend.login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      console.error("Login attempt failed:", err);
+      if (err.message?.includes('Invalid login credentials')) {
+        setError('Invalid email or password. Please try again.');
+      } else if (err.message?.includes('Email not confirmed')) {
+        setError('Please check your email to confirm your account before logging in.');
+      } else {
+        setError(err.message || 'Login failed. Please check the console for details.');
+      }
     } finally {
       setLoading(false);
     }

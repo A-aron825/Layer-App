@@ -6,6 +6,7 @@ const CURRENT_USER_KEY = 'layer_current_user';
 
 export const backend = {
   async signup(user: Omit<User, 'id'>): Promise<User> {
+    console.log("DEBUG: Starting signup for", user.email);
     const { data, error } = await supabase.auth.signUp({
       email: user.email,
       password: user.password || 'password123', // Fallback if not provided
@@ -18,8 +19,21 @@ export const backend = {
       }
     });
 
-    if (error) throw error;
-    if (!data.user) throw new Error("Signup failed");
+    if (error) {
+      console.error("DEBUG: Supabase signup error:", JSON.stringify(error, null, 2));
+      throw error;
+    }
+    if (!data.user) {
+      console.error("DEBUG: Signup failed - no user returned");
+      throw new Error("Signup failed");
+    }
+
+    console.log("DEBUG: Signup success, user ID:", data.user.id);
+    if (!data.session) {
+      console.warn("DEBUG: Signup succeeded but no session returned. Email confirmation might be required.");
+      // We still proceed to set local storage so the UI can show a "Check your email" state if we wanted,
+      // but for now we'll just let the auth listener handle it.
+    }
 
     const newUser: User = {
       id: data.user.id,
@@ -30,7 +44,8 @@ export const backend = {
     };
 
     // Also save to a profiles table for easier querying if needed
-    await supabase.from('profiles').upsert({
+    console.log("DEBUG: Upserting profile for", newUser.id);
+    const { error: profileError } = await supabase.from('profiles').upsert({
       id: newUser.id,
       email: newUser.email,
       username: newUser.username,
@@ -38,27 +53,51 @@ export const backend = {
       plan: newUser.plan
     });
 
+    if (profileError) {
+      console.warn("DEBUG: Profile upsert failed (non-blocking):", JSON.stringify(profileError, null, 2));
+    }
+
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(newUser));
     return newUser;
   },
 
   async login(email: string, password: string): Promise<User> {
+    console.log("DEBUG: Starting login for", email);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password
     });
 
-    if (error) throw error;
-    if (!data.user) throw new Error("Login failed");
+    if (error) {
+      console.error("DEBUG: Login error:", JSON.stringify(error, null, 2));
+      throw error;
+    }
+    if (!data.user) {
+      console.error("DEBUG: Login failed - no user returned");
+      throw new Error("Login failed");
+    }
+
+    // Try to fetch profile from database to get the most up-to-date data
+    console.log("DEBUG: Fetching profile for", data.user.id);
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', data.user.id)
+      .single();
+
+    if (profileError) {
+      console.warn("DEBUG: Profile fetch failed (using metadata):", JSON.stringify(profileError, null, 2));
+    }
 
     const user: User = {
       id: data.user.id,
       email: data.user.email!,
-      username: data.user.user_metadata.username,
-      styles: data.user.user_metadata.styles,
-      plan: data.user.user_metadata.plan
+      username: profile?.username || data.user.user_metadata.username || data.user.email?.split('@')[0],
+      styles: profile?.styles || data.user.user_metadata.styles || [],
+      plan: profile?.plan || data.user.user_metadata.plan || 'Starter'
     };
 
+    console.log("DEBUG: Login success, user:", user.username);
     localStorage.setItem(CURRENT_USER_KEY, JSON.stringify(user));
     return user;
   },
@@ -122,7 +161,16 @@ export const backend = {
 
   async addItem(item: Omit<ClothingItem, 'id' | 'userId'>): Promise<ClothingItem> {
     const user = this.getCurrentUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) {
+      console.error("addItem failed: Not authenticated");
+      throw new Error("Not authenticated");
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("DEBUG: Supabase Session exists:", !!session);
+    if (!session) {
+      console.warn("DEBUG: No Supabase session found in client, but user exists in localStorage. This will likely 401.");
+    }
 
     const dbItem = {
       name: item.name,
@@ -130,10 +178,12 @@ export const backend = {
       image_url: item.imageUrl,
       category: item.category,
       wear_count: item.wearCount || 0,
-      last_worn: item.lastWorn?.toISOString(),
-      resale_value: item.resaleValue,
+      last_worn: item.lastWorn?.toISOString() || null,
+      resale_value: item.resaleValue || 0,
       user_id: user.id
     };
+
+    console.log("Supabase addItem attempt:", dbItem);
 
     const { data, error } = await supabase
       .from('clothing_items')
@@ -142,10 +192,12 @@ export const backend = {
       .single();
 
     if (error) {
-      console.error("Supabase addItem error:", error);
+      console.error("Supabase addItem error details:", JSON.stringify(error, null, 2));
       throw error;
     }
     
+    console.log("Supabase addItem success:", data);
+
     return {
       id: data.id,
       name: data.name,
@@ -403,14 +455,23 @@ export const backend = {
 
   async savePlanner(days: any[]): Promise<void> {
     const user = this.getCurrentUser();
-    if (!user) throw new Error("Not authenticated");
+    if (!user) {
+      console.error("savePlanner failed: Not authenticated");
+      throw new Error("Not authenticated");
+    }
+
+    const { data: { session } } = await supabase.auth.getSession();
+    console.log("DEBUG: Supabase Session exists in savePlanner:", !!session);
+    if (!session) {
+      console.warn("DEBUG: No Supabase session found in savePlanner, but user exists in localStorage. This will likely 401.");
+    }
 
     const { error } = await supabase
       .from('planner')
       .upsert({ user_id: user.id, days });
 
     if (error) {
-      console.error("Supabase savePlanner error:", error);
+      console.error("Supabase savePlanner error:", JSON.stringify(error, null, 2));
       throw error;
     }
   },

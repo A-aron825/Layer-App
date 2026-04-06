@@ -284,6 +284,12 @@ const Dashboard: React.FC = () => {
   const isPro = user?.plan === 'Pro' || user?.plan === 'Elite';
   const isElite = user?.plan === 'Elite';
 
+  useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   const [activeTab, setActiveTab] = useState('wardrobe');
   const [librarySubTab, setLibrarySubTab] = useState<'all' | 'favorites' | 'folders'>('all');
   const [exploreSubTab, setExploreSubTab] = useState<'feed' | 'vibe'>('feed');
@@ -294,6 +300,7 @@ const Dashboard: React.FC = () => {
   const [folders, setFolders] = useState<Folder[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
+  const isInitialMount = useRef(true);
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [selectedFolderId, setSelectedFolderId] = useState<string | null>(null);
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
@@ -404,10 +411,14 @@ const Dashboard: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    if (plannedWeek.length > 0) {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (plannedWeek.length > 0 && !isLoadingData) {
       backend.savePlanner(plannedWeek).catch(console.error);
     }
-  }, [plannedWeek]);
+  }, [plannedWeek, isLoadingData]);
 
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chatHistory, isChatOpen]);
 
